@@ -31,6 +31,7 @@ footer{margin-top:18px;text-align:center;color:#64748b}
 .hint{font-size:13px;color:#475569;margin-top:8px}
 .watermark{position:absolute;top:8px;left:8px;font-size:13px;color:rgba(255,0,0,0.35);pointer-events:none;user-select:none}
 @media(max-width:640px){.flex{flex-direction:column}}
+iframe, object, video{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
@@ -70,6 +71,9 @@ footer{margin-top:18px;text-align:center;color:#64748b}
     </div>
 
     <div class="top-actions" style="margin-top:12px">
+      <button id="exportAllBtn">সব এক্সপোর্ট (ZIP)</button>
+      <button id="importZipBtn">ইম্পোর্ট ZIP (বিকল্প)</button>
+      <input id="importZipFile" type="file" accept=".zip" style="display:none" />
       <button id="clearAllBtn">সব মুছুন</button>
       <button id="changePassBtn" style="background:#0ea5a4">পাসওয়ার্ড পরিবর্তন</button>
     </div>
@@ -172,29 +176,36 @@ req.onerror=e=>reject(e.target.error);});}
 async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).delete(idToDelete); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);});}
 function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=bytes/1024; if(kb<1024) return kb.toFixed(1)+' KB'; const mb=kb/1024; if(mb<1024) return mb.toFixed(1)+' MB'; return (mb/1024).toFixed(2)+' GB';}
 
-// ===== Preview (Download Disabled) =====
+// ===== Preview =====
 function previewFile(file){
   const blob=new Blob([file.data],{type:file.mime});
   const url=URL.createObjectURL(blob);
   const area=document.getElementById('previewArea'); area.innerHTML='';
   const wm=document.getElementById('wmText'); wm.textContent=`Confidential • ${new Date().toLocaleDateString()}`;
   if(file.mime==='application/pdf'){
+    // iframe with download disabled
     const iframe=document.createElement('iframe');
     iframe.src=url;
     iframe.width='100%';
     iframe.height='360px';
-    iframe.style.border='none';
+    iframe.setAttribute('sandbox','allow-scripts allow-same-origin');
+    iframe.setAttribute('type','application/pdf');
+    iframe.style.pointerEvents='auto';
     area.appendChild(iframe);
   } else if(file.mime.startsWith('video/')){
     const vid=document.createElement('video');
     vid.className='preview';
+    vid.controls=true;
     vid.autoplay=false;
-    vid.controls=false; // controls off to avoid download
     vid.src=url;
     vid.oncontextmenu=e=>e.preventDefault();
+    vid.controlsList='nodownload';
     area.appendChild(vid);
-  } else { area.textContent='প্রিভিউ নেই।'; }
+  } else { area.textContent='প্রিভিউ নেই — ডাউনলোড সীমিত।'; }
 }
+
+// ===== Download (Blocked) =====
+function downloadFile(file){alert('ডাউনলোড সীমিত করা হয়েছে।');}
 
 // ===== UI Update =====
 async function updateUI(){
@@ -212,6 +223,7 @@ files.forEach(f=>{const div=document.createElement('div'); div.className='file';
 const meta=document.createElement('div'); meta.className='meta'; meta.textContent=f.name+' ('+readableSize(f.size)+')'; div.appendChild(meta);
 const actions=document.createElement('div');
 const pbtn=document.createElement('button'); pbtn.textContent='প্রিভিউ'; pbtn.onclick=()=>previewFile(f); actions.appendChild(pbtn);
+const dbtn=document.createElement('button'); dbtn.textContent='ডাউনলোড'; dbtn.onclick=()=>downloadFile(f); actions.appendChild(dbtn);
 const rbtn=document.createElement('button'); rbtn.textContent='মুছুন'; rbtn.onclick=async()=>{if(confirm('নিশ্চিত মুছতে চান?')){await deleteItem(f.id);updateFiles();}}; actions.appendChild(rbtn);
 div.appendChild(actions); filesList.appendChild(div);});
 }
@@ -233,7 +245,14 @@ document.getElementById('uploadBtn').addEventListener('click', async ()=>{
   inp.value=''; await updateFiles();
 });
 
-// ===== Clear all =====
+// ===== Export/Import & Clear =====
+document.getElementById('exportAllBtn').addEventListener('click', async ()=>{
+  alert('ডাউনলোড সীমিত করা হয়েছে।');
+});
+document.getElementById('importZipBtn').addEventListener('click', ()=>document.getElementById('importZipFile').click());
+document.getElementById('importZipFile').addEventListener('change', async e=>{
+  alert('ইম্পোর্ট সীমিত করা হয়েছে।');
+});
 document.getElementById('clearAllBtn').addEventListener('click', async ()=>{if(confirm('সব মুছতে চান?')){const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).clear(); currentFolder=null; await updateUI(); document.getElementById('previewArea').innerHTML='';}});
 document.getElementById('changePassBtn').addEventListener('click', ()=>{showSetup();});
 </script>
