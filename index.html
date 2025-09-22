@@ -116,7 +116,7 @@ footer{margin-top:18px;text-align:center;color:#64748b}
 </div>
 
 <script>
-// ===== Auth & DB same as before =====
+// ===== Auth =====
 const DEFAULT_PASSWORD = "Ajhar123";
 async function sha256hex(str){const enc=new TextEncoder(); const buf=await crypto.subtle.digest('SHA-256', enc.encode(str)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 function getStorage(){ return window.localStorage; }
@@ -130,24 +130,16 @@ function showSetup(){ document.getElementById('loginArea').style.display='none';
 function showLogin(){ document.getElementById('loginArea').style.display='block'; document.getElementById('setupArea').style.display='none'; document.getElementById('authTitle').textContent='লগইন'; }
 
 document.addEventListener('DOMContentLoaded', async ()=>{ await ensureDefaultPassword(); showLogin(); });
-
 document.getElementById('doSetPass').addEventListener('click', async ()=>{
-  const a=document.getElementById('newPass').value.trim();
-  const b=document.getElementById('confirmPass').value.trim();
-  if(a.length<6){alert('কমপক্ষে 6 অক্ষরের পাসওয়ার্ড দিন');return;}
-  if(a!==b){alert('পাসওয়ার্ড মিলছে না');return;}
-  await setPassword(a); alert('পাসওয়ার্ড সেভ হয়েছে — এখন লগইন করুন');
-  document.getElementById('newPass').value=''; document.getElementById('confirmPass').value=''; showLogin();
+  const a=document.getElementById('newPass').value.trim(); const b=document.getElementById('confirmPass').value.trim();
+  if(a.length<6){alert('কমপক্ষে 6 অক্ষরের পাসওয়ার্ড দিন');return;} if(a!==b){alert('পাসওয়ার্ড মিলছে না');return;}
+  await setPassword(a); alert('পাসওয়ার্ড সেভ হয়েছে — এখন লগইন করুন'); document.getElementById('newPass').value=''; document.getElementById('confirmPass').value=''; showLogin();
 });
-
 document.getElementById('doLogin').addEventListener('click', async ()=>{
-  const p=document.getElementById('inPass').value;
-  if(!p){alert('পাসওয়ার্ড দিন');return;}
-  const ok=await verifyPassword(p);
-  if(ok){document.getElementById('inPass').value=''; clearAuthOverlay(); initApp();}
+  const p=document.getElementById('inPass').value; if(!p){alert('পাসওয়ার্ড দিন');return;}
+  const ok=await verifyPassword(p); if(ok){document.getElementById('inPass').value=''; clearAuthOverlay(); initApp();}
   else{alert('পাসওয়ার্ড ভুল।');}
 });
-
 document.getElementById('showSet').addEventListener('click', ()=>{
   if(confirm('পাসওয়ার্ড রিসেট করলে পুরনো পাসওয়ার্ড কাজ করবে না। আপনি কি নিশ্চিত?')){
     getStorage().removeItem('office_pwd_hash'); getStorage().removeItem('office_pwd_salt'); showSetup();
@@ -177,19 +169,20 @@ async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{cons
 function escapeHtml(s){return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
 function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=bytes/1024; if(kb<1024) return kb.toFixed(1)+' KB'; const mb=kb/1024; if(mb<1024) return mb.toFixed(1)+' MB'; return (mb/1024).toFixed(2)+' GB';}
 
-// ===== Preview (PDF & Video fixed) =====
+// ===== Preview =====
 function previewFile(file){
   const blob=new Blob([file.data],{type:file.mime});
   const url=URL.createObjectURL(blob);
   const area=document.getElementById('previewArea'); area.innerHTML='';
   const wm=document.getElementById('wmText'); wm.textContent=`Confidential • ${new Date().toLocaleDateString()}`;
   if(file.mime==='application/pdf'){
-    const iframe=document.createElement('iframe');
-    iframe.className='preview';
-    iframe.src=url;
-    iframe.style.width='100%';
-    iframe.style.height='360px';
-    area.appendChild(iframe);
+    // PDF preview fixed
+    const obj=document.createElement('object');
+    obj.data=url;
+    obj.type='application/pdf';
+    obj.width='100%';
+    obj.height='360px';
+    area.appendChild(obj);
   } else if(file.mime.startsWith('video/')){
     const vid=document.createElement('video');
     vid.className='preview';
@@ -258,7 +251,6 @@ document.getElementById('importZipFile').addEventListener('change', async e=>{
 });
 document.getElementById('clearAllBtn').addEventListener('click', async ()=>{if(confirm('সব মুছতে চান?')){const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).clear(); currentFolder=null; await updateUI(); document.getElementById('previewArea').innerHTML='';}});
 document.getElementById('changePassBtn').addEventListener('click', ()=>{showSetup();});
-
 </script>
 </body>
 </html>
