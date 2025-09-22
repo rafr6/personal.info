@@ -70,9 +70,6 @@ footer{margin-top:18px;text-align:center;color:#64748b}
     </div>
 
     <div class="top-actions" style="margin-top:12px">
-      <button id="exportAllBtn">সব এক্সপোর্ট (ZIP)</button>
-      <button id="importZipBtn">ইম্পোর্ট ZIP (বিকল্প)</button>
-      <input id="importZipFile" type="file" accept=".zip" style="display:none" />
       <button id="clearAllBtn">সব মুছুন</button>
       <button id="changePassBtn" style="background:#0ea5a4">পাসওয়ার্ড পরিবর্তন</button>
     </div>
@@ -175,32 +172,29 @@ req.onerror=e=>reject(e.target.error);});}
 async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).delete(idToDelete); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);});}
 function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=bytes/1024; if(kb<1024) return kb.toFixed(1)+' KB'; const mb=kb/1024; if(mb<1024) return mb.toFixed(1)+' MB'; return (mb/1024).toFixed(2)+' GB';}
 
-// ===== Preview =====
+// ===== Preview (Download Disabled) =====
 function previewFile(file){
   const blob=new Blob([file.data],{type:file.mime});
   const url=URL.createObjectURL(blob);
   const area=document.getElementById('previewArea'); area.innerHTML='';
   const wm=document.getElementById('wmText'); wm.textContent=`Confidential • ${new Date().toLocaleDateString()}`;
   if(file.mime==='application/pdf'){
-    const obj=document.createElement('object');
-    obj.data=url;
-    obj.type='application/pdf';
-    obj.width='100%';
-    obj.height='360px';
-    area.appendChild(obj);
+    const iframe=document.createElement('iframe');
+    iframe.src=url;
+    iframe.width='100%';
+    iframe.height='360px';
+    iframe.style.border='none';
+    area.appendChild(iframe);
   } else if(file.mime.startsWith('video/')){
     const vid=document.createElement('video');
     vid.className='preview';
-    vid.controls=true;
     vid.autoplay=false;
+    vid.controls=false; // controls off to avoid download
     vid.src=url;
     vid.oncontextmenu=e=>e.preventDefault();
     area.appendChild(vid);
-  } else { area.textContent='প্রিভিউ নেই — ডাউনলোড করুন।'; }
+  } else { area.textContent='প্রিভিউ নেই।'; }
 }
-
-// ===== Download =====
-function downloadFile(file){const blob=new Blob([file.data],{type:file.mime}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);}
 
 // ===== UI Update =====
 async function updateUI(){
@@ -218,7 +212,6 @@ files.forEach(f=>{const div=document.createElement('div'); div.className='file';
 const meta=document.createElement('div'); meta.className='meta'; meta.textContent=f.name+' ('+readableSize(f.size)+')'; div.appendChild(meta);
 const actions=document.createElement('div');
 const pbtn=document.createElement('button'); pbtn.textContent='প্রিভিউ'; pbtn.onclick=()=>previewFile(f); actions.appendChild(pbtn);
-const dbtn=document.createElement('button'); dbtn.textContent='ডাউনলোড'; dbtn.onclick=()=>downloadFile(f); actions.appendChild(dbtn);
 const rbtn=document.createElement('button'); rbtn.textContent='মুছুন'; rbtn.onclick=async()=>{if(confirm('নিশ্চিত মুছতে চান?')){await deleteItem(f.id);updateFiles();}}; actions.appendChild(rbtn);
 div.appendChild(actions); filesList.appendChild(div);});
 }
@@ -240,20 +233,7 @@ document.getElementById('uploadBtn').addEventListener('click', async ()=>{
   inp.value=''; await updateFiles();
 });
 
-// ===== Export/Import & Clear =====
-document.getElementById('exportAllBtn').addEventListener('click', async ()=>{
-  const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE); const req=store.getAll();
-  req.onsuccess=async e=>{const all=e.target.result; if(!all.length){alert('কোনো ফাইল নেই'); return;}
-    const zip=new JSZip(); all.forEach(item=>{if(item.type==='file') zip.file(item.name,new Blob([item.data],{type:item.mime}));});
-    const blob=await zip.generateAsync({type:'blob'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='office_export.zip'; a.click(); URL.revokeObjectURL(url);}; req.onerror=e=>alert('ZIP export error');});
-document.getElementById('importZipBtn').addEventListener('click', ()=>document.getElementById('importZipFile').click());
-document.getElementById('importZipFile').addEventListener('change', async e=>{
-  const file=e.target.files[0]; if(!file) return;
-  const zip=await JSZip.loadAsync(file); const folderName=file.name.replace('.zip',''); let folders=await getFolders();
-  let folder=folders.find(f=>f.name===folderName); if(!folder){await createFolder(folderName); folders=await getFolders(); folder=folders.find(f=>f.name===folderName);}
-  for(const fname in zip.files){const fdata=await zip.files[fname].async('arraybuffer'); await addFileToFolder(new File([fdata],fname,{type:'application/octet-stream'}),folder.id);}
-  e.target.value=''; await updateUI(); if(folder) currentFolder=folder.id; await updateFiles();
-});
+// ===== Clear all =====
 document.getElementById('clearAllBtn').addEventListener('click', async ()=>{if(confirm('সব মুছতে চান?')){const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).clear(); currentFolder=null; await updateUI(); document.getElementById('previewArea').innerHTML='';}});
 document.getElementById('changePassBtn').addEventListener('click', ()=>{showSetup();});
 </script>
