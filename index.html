@@ -125,24 +125,30 @@ function randSalt(){ return Math.random().toString(36).slice(2,10); }
 async function setPassword(plain){ const salt=randSalt(); const h=await sha256hex(salt+'|'+plain); getStorage().setItem('office_pwd_hash',h); getStorage().setItem('office_pwd_salt',salt);}
 async function verifyPassword(plain){ const salt=getStorage().getItem('office_pwd_salt')||''; const h=await sha256hex(salt+'|'+plain); return h===getStorage().getItem('office_pwd_hash');}
 async function ensureDefaultPassword(){ if(!hasPasswordSet()){ await setPassword(DEFAULT_PASSWORD); } }
-function clearAuthOverlay(){ document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; }
+function clearAuthOverlay(){ getStorage().setItem('office_logged_in','1'); document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; }
 function showSetup(){ document.getElementById('loginArea').style.display='none'; document.getElementById('setupArea').style.display='block'; document.getElementById('authTitle').textContent='পাসওয়ার্ড সেট করুন'; }
 function showLogin(){ document.getElementById('loginArea').style.display='block'; document.getElementById('setupArea').style.display='none'; document.getElementById('authTitle').textContent='লগইন'; }
 
-document.addEventListener('DOMContentLoaded', async ()=>{ await ensureDefaultPassword(); showLogin(); });
+document.addEventListener('DOMContentLoaded', async ()=>{
+  await ensureDefaultPassword();
+  if(getStorage().getItem('office_logged_in')==='1'){ clearAuthOverlay(); initApp(); } else { showLogin(); }
+});
+
 document.getElementById('doSetPass').addEventListener('click', async ()=>{
   const a=document.getElementById('newPass').value.trim(); const b=document.getElementById('confirmPass').value.trim();
   if(a.length<6){alert('কমপক্ষে 6 অক্ষরের পাসওয়ার্ড দিন');return;} if(a!==b){alert('পাসওয়ার্ড মিলছে না');return;}
   await setPassword(a); alert('পাসওয়ার্ড সেভ হয়েছে — এখন লগইন করুন'); document.getElementById('newPass').value=''; document.getElementById('confirmPass').value=''; showLogin();
 });
+
 document.getElementById('doLogin').addEventListener('click', async ()=>{
   const p=document.getElementById('inPass').value; if(!p){alert('পাসওয়ার্ড দিন');return;}
   const ok=await verifyPassword(p); if(ok){document.getElementById('inPass').value=''; clearAuthOverlay(); initApp();}
   else{alert('পাসওয়ার্ড ভুল।');}
 });
+
 document.getElementById('showSet').addEventListener('click', ()=>{
   if(confirm('পাসওয়ার্ড রিসেট করলে পুরনো পাসওয়ার্ড কাজ করবে না। আপনি কি নিশ্চিত?')){
-    getStorage().removeItem('office_pwd_hash'); getStorage().removeItem('office_pwd_salt'); showSetup();
+    getStorage().removeItem('office_pwd_hash'); getStorage().removeItem('office_pwd_salt'); getStorage().removeItem('office_logged_in'); showSetup();
   }
 });
 document.getElementById('cancelSet').addEventListener('click',()=>{showLogin();});
@@ -159,14 +165,14 @@ return tx.complete || new Promise((res,rej)=>{tx.oncomplete=res; tx.onerror=()=>
 async function getFolders(){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE); const items=[];
 const req=store.openCursor(); req.onsuccess=e=>{const cur=e.target.result;if(cur){const v=cur.value;if(v.type==='folder') items.push(v); cur.continue();} else resolve(items.sort((a,b)=>a.created-b.created));};
 req.onerror=e=>reject(e.target.error);});}
-async function addFileToFolder(file,folderId){return new Promise((resolve,reject)=>{const reader=new FileReader(); reader.onload=ev=>{const data=ev.target.result;
-const obj={id:id(), type:'file', name:file.name, mime:file.type, size:file.size, folder:folderId, created:Date.now(), data:data};
-const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).add(obj); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);}; reader.onerror=e=>reject(e); reader.readAsArrayBuffer(file);});}
+async function addFileToFolder(file,folderId){return new Promise((resolve,reject)=>{const reader=new FileReader(); reader.onload=ev=>{
+  const data=ev.target.result; const obj={id:id(), type:'file', name:file.name, mime:file.type, size:file.size, folder:folderId, created:Date.now(), data:data};
+  const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).add(obj); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);
+}; reader.onerror=e=>reject(e); reader.readAsArrayBuffer(file);});}
 async function getFilesForFolder(folderId){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE);
 const index=store.index('folder'); const req=index.getAll(folderId); req.onsuccess=e=>resolve(e.target.result.sort((a,b)=>b.created-a.created));
 req.onerror=e=>reject(e.target.error);});}
 async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).delete(idToDelete); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);});}
-function escapeHtml(s){return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
 function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=bytes/1024; if(kb<1024) return kb.toFixed(1)+' KB'; const mb=kb/1024; if(mb<1024) return mb.toFixed(1)+' MB'; return (mb/1024).toFixed(2)+' GB';}
 
 // ===== Preview =====
@@ -176,7 +182,6 @@ function previewFile(file){
   const area=document.getElementById('previewArea'); area.innerHTML='';
   const wm=document.getElementById('wmText'); wm.textContent=`Confidential • ${new Date().toLocaleDateString()}`;
   if(file.mime==='application/pdf'){
-    // PDF preview fixed
     const obj=document.createElement('object');
     obj.data=url;
     obj.type='application/pdf';
