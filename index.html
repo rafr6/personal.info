@@ -31,7 +31,7 @@ footer{margin-top:18px;text-align:center;color:#64748b}
 .hint{font-size:13px;color:#475569;margin-top:8px}
 .watermark{position:absolute;top:8px;left:8px;font-size:13px;color:rgba(255,0,0,0.35);pointer-events:none;user-select:none}
 @media(max-width:640px){.flex{flex-direction:column}}
-iframe, object, video{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}
+iframe, video{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
@@ -126,13 +126,13 @@ function randSalt(){ return Math.random().toString(36).slice(2,10); }
 async function setPassword(plain){ const salt=randSalt(); const h=await sha256hex(salt+'|'+plain); getStorage().setItem('office_pwd_hash',h); getStorage().setItem('office_pwd_salt',salt);}
 async function verifyPassword(plain){ const salt=getStorage().getItem('office_pwd_salt')||''; const h=await sha256hex(salt+'|'+plain); return h===getStorage().getItem('office_pwd_hash');}
 async function ensureDefaultPassword(){ if(!hasPasswordSet()){ await setPassword(DEFAULT_PASSWORD); } }
-function clearAuthOverlay(){ getStorage().setItem('office_logged_in','1'); document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; }
+function clearAuthOverlay(){ getStorage().setItem('office_logged_in','1'); document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; initApp(); }
 function showSetup(){ document.getElementById('loginArea').style.display='none'; document.getElementById('setupArea').style.display='block'; document.getElementById('authTitle').textContent='পাসওয়ার্ড সেট করুন'; }
 function showLogin(){ document.getElementById('loginArea').style.display='block'; document.getElementById('setupArea').style.display='none'; document.getElementById('authTitle').textContent='লগইন'; }
 
 document.addEventListener('DOMContentLoaded', async ()=>{
   await ensureDefaultPassword();
-  if(getStorage().getItem('office_logged_in')==='1'){ clearAuthOverlay(); initApp(); } else { showLogin(); }
+  if(getStorage().getItem('office_logged_in')==='1'){ clearAuthOverlay(); } else { showLogin(); }
 });
 
 document.getElementById('doSetPass').addEventListener('click', async ()=>{
@@ -143,7 +143,7 @@ document.getElementById('doSetPass').addEventListener('click', async ()=>{
 
 document.getElementById('doLogin').addEventListener('click', async ()=>{
   const p=document.getElementById('inPass').value; if(!p){alert('পাসওয়ার্ড দিন');return;}
-  const ok=await verifyPassword(p); if(ok){document.getElementById('inPass').value=''; clearAuthOverlay(); initApp();}
+  const ok=await verifyPassword(p); if(ok){document.getElementById('inPass').value=''; clearAuthOverlay();}
   else{alert('পাসওয়ার্ড ভুল।');}
 });
 
@@ -183,13 +183,10 @@ function previewFile(file){
   const area=document.getElementById('previewArea'); area.innerHTML='';
   const wm=document.getElementById('wmText'); wm.textContent=`Confidential • ${new Date().toLocaleDateString()}`;
   if(file.mime==='application/pdf'){
-    // iframe with download disabled
     const iframe=document.createElement('iframe');
     iframe.src=url;
     iframe.width='100%';
     iframe.height='360px';
-    iframe.setAttribute('sandbox','allow-scripts allow-same-origin');
-    iframe.setAttribute('type','application/pdf');
     iframe.style.pointerEvents='auto';
     area.appendChild(iframe);
   } else if(file.mime.startsWith('video/')){
@@ -201,11 +198,8 @@ function previewFile(file){
     vid.oncontextmenu=e=>e.preventDefault();
     vid.controlsList='nodownload';
     area.appendChild(vid);
-  } else { area.textContent='প্রিভিউ নেই — ডাউনলোড সীমিত।'; }
+  } else { area.textContent='প্রিভিউ নেই'; }
 }
-
-// ===== Download (Blocked) =====
-function downloadFile(file){alert('ডাউনলোড সীমিত করা হয়েছে।');}
 
 // ===== UI Update =====
 async function updateUI(){
@@ -223,7 +217,6 @@ files.forEach(f=>{const div=document.createElement('div'); div.className='file';
 const meta=document.createElement('div'); meta.className='meta'; meta.textContent=f.name+' ('+readableSize(f.size)+')'; div.appendChild(meta);
 const actions=document.createElement('div');
 const pbtn=document.createElement('button'); pbtn.textContent='প্রিভিউ'; pbtn.onclick=()=>previewFile(f); actions.appendChild(pbtn);
-const dbtn=document.createElement('button'); dbtn.textContent='ডাউনলোড'; dbtn.onclick=()=>downloadFile(f); actions.appendChild(dbtn);
 const rbtn=document.createElement('button'); rbtn.textContent='মুছুন'; rbtn.onclick=async()=>{if(confirm('নিশ্চিত মুছতে চান?')){await deleteItem(f.id);updateFiles();}}; actions.appendChild(rbtn);
 div.appendChild(actions); filesList.appendChild(div);});
 }
@@ -246,13 +239,9 @@ document.getElementById('uploadBtn').addEventListener('click', async ()=>{
 });
 
 // ===== Export/Import & Clear =====
-document.getElementById('exportAllBtn').addEventListener('click', async ()=>{
-  alert('ডাউনলোড সীমিত করা হয়েছে।');
-});
+document.getElementById('exportAllBtn').addEventListener('click', async ()=>{alert('ডাউনলোড সীমিত করা হয়েছে।');});
 document.getElementById('importZipBtn').addEventListener('click', ()=>document.getElementById('importZipFile').click());
-document.getElementById('importZipFile').addEventListener('change', async e=>{
-  alert('ইম্পোর্ট সীমিত করা হয়েছে।');
-});
+document.getElementById('importZipFile').addEventListener('change', async e=>{alert('ইম্পোর্ট সীমিত করা হয়েছে।');});
 document.getElementById('clearAllBtn').addEventListener('click', async ()=>{if(confirm('সব মুছতে চান?')){const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).clear(); currentFolder=null; await updateUI(); document.getElementById('previewArea').innerHTML='';}});
 document.getElementById('changePassBtn').addEventListener('click', ()=>{showSetup();});
 </script>
