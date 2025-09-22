@@ -116,125 +116,102 @@ footer{margin-top:18px;text-align:center;color:#64748b}
 </div>
 
 <script>
-// ===== Configurable default password =====
+// ===== Auth & DB same as before =====
 const DEFAULT_PASSWORD = "Ajhar123";
-
-// ===== Auth helpers =====
-async function sha256hex(str){
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+async function sha256hex(str){const enc=new TextEncoder(); const buf=await crypto.subtle.digest('SHA-256', enc.encode(str)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 function getStorage(){ return window.localStorage; }
 function hasPasswordSet(){ return !!getStorage().getItem('office_pwd_hash'); }
 function randSalt(){ return Math.random().toString(36).slice(2,10); }
-
-async function setPassword(plain){
-  const salt = randSalt();
-  const h = await sha256hex(salt + '|' + plain);
-  getStorage().setItem('office_pwd_hash', h);
-  getStorage().setItem('office_pwd_salt', salt);
-}
-
-async function verifyPassword(plain){
-  const salt = getStorage().getItem('office_pwd_salt') || '';
-  const h = await sha256hex(salt + '|' + plain);
-  return h === getStorage().getItem('office_pwd_hash');
-}
-
-async function ensureDefaultPassword(){
-  if(!hasPasswordSet()){
-    await setPassword(DEFAULT_PASSWORD);
-  }
-}
-
+async function setPassword(plain){ const salt=randSalt(); const h=await sha256hex(salt+'|'+plain); getStorage().setItem('office_pwd_hash',h); getStorage().setItem('office_pwd_salt',salt);}
+async function verifyPassword(plain){ const salt=getStorage().getItem('office_pwd_salt')||''; const h=await sha256hex(salt+'|'+plain); return h===getStorage().getItem('office_pwd_hash');}
+async function ensureDefaultPassword(){ if(!hasPasswordSet()){ await setPassword(DEFAULT_PASSWORD); } }
 function clearAuthOverlay(){ document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; }
 function showSetup(){ document.getElementById('loginArea').style.display='none'; document.getElementById('setupArea').style.display='block'; document.getElementById('authTitle').textContent='পাসওয়ার্ড সেট করুন'; }
 function showLogin(){ document.getElementById('loginArea').style.display='block'; document.getElementById('setupArea').style.display='none'; document.getElementById('authTitle').textContent='লগইন'; }
 
-document.addEventListener('DOMContentLoaded', async ()=>{
-  await ensureDefaultPassword();
-  showLogin();
-});
+document.addEventListener('DOMContentLoaded', async ()=>{ await ensureDefaultPassword(); showLogin(); });
 
-// ===== Auth buttons =====
 document.getElementById('doSetPass').addEventListener('click', async ()=>{
   const a=document.getElementById('newPass').value.trim();
   const b=document.getElementById('confirmPass').value.trim();
   if(a.length<6){alert('কমপক্ষে 6 অক্ষরের পাসওয়ার্ড দিন');return;}
   if(a!==b){alert('পাসওয়ার্ড মিলছে না');return;}
-  await setPassword(a);
-  alert('পাসওয়ার্ড সেভ হয়েছে — এখন লগইন করুন');
-  document.getElementById('newPass').value='';document.getElementById('confirmPass').value='';
-  showLogin();
+  await setPassword(a); alert('পাসওয়ার্ড সেভ হয়েছে — এখন লগইন করুন');
+  document.getElementById('newPass').value=''; document.getElementById('confirmPass').value=''; showLogin();
 });
 
 document.getElementById('doLogin').addEventListener('click', async ()=>{
   const p=document.getElementById('inPass').value;
   if(!p){alert('পাসওয়ার্ড দিন');return;}
   const ok=await verifyPassword(p);
-  if(ok){document.getElementById('inPass').value='';clearAuthOverlay();initApp();}
+  if(ok){document.getElementById('inPass').value=''; clearAuthOverlay(); initApp();}
   else{alert('পাসওয়ার্ড ভুল।');}
 });
 
 document.getElementById('showSet').addEventListener('click', ()=>{
   if(confirm('পাসওয়ার্ড রিসেট করলে পুরনো পাসওয়ার্ড কাজ করবে না। আপনি কি নিশ্চিত?')){
-    getStorage().removeItem('office_pwd_hash'); getStorage().removeItem('office_pwd_salt');
-    showSetup();
+    getStorage().removeItem('office_pwd_hash'); getStorage().removeItem('office_pwd_salt'); showSetup();
   }
 });
 document.getElementById('cancelSet').addEventListener('click',()=>{showLogin();});
 
 // ===== IndexedDB & File Manager =====
-const DB_NAME='office-files-db'; const DB_STORE='files';
-let db; let currentFolder=null;
-
+const DB_NAME='office-files-db'; const DB_STORE='files'; let db; let currentFolder=null;
 function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);
 req.onupgradeneeded=e=>{const idb=e.target.result; if(!idb.objectStoreNames.contains(DB_STORE)){const store=idb.createObjectStore(DB_STORE,{keyPath:'id'}); store.createIndex('folder','folder',{unique:false});}};
 req.onsuccess=e=>{db=e.target.result;resolve(db);}; req.onerror=e=>reject(e.target.error);})}
-
 function id(){return 'f_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);}
-
 async function createFolder(name){const tx=db.transaction(DB_STORE,'readwrite'); const store=tx.objectStore(DB_STORE);
 const folderObj={id:id(), type:'folder', name, created:Date.now()}; store.add(folderObj);
 return tx.complete || new Promise((res,rej)=>{tx.oncomplete=res; tx.onerror=()=>rej();});}
-
 async function getFolders(){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE); const items=[];
 const req=store.openCursor(); req.onsuccess=e=>{const cur=e.target.result;if(cur){const v=cur.value;if(v.type==='folder') items.push(v); cur.continue();} else resolve(items.sort((a,b)=>a.created-b.created));};
 req.onerror=e=>reject(e.target.error);});}
-
 async function addFileToFolder(file,folderId){return new Promise((resolve,reject)=>{const reader=new FileReader(); reader.onload=ev=>{const data=ev.target.result;
 const obj={id:id(), type:'file', name:file.name, mime:file.type, size:file.size, folder:folderId, created:Date.now(), data:data};
 const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).add(obj); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);}; reader.onerror=e=>reject(e); reader.readAsArrayBuffer(file);});}
-
 async function getFilesForFolder(folderId){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE);
 const index=store.index('folder'); const req=index.getAll(folderId); req.onsuccess=e=>resolve(e.target.result.sort((a,b)=>b.created-a.created));
 req.onerror=e=>reject(e.target.error);});}
-
 async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).delete(idToDelete); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);});}
-
 function escapeHtml(s){return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
 function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=bytes/1024; if(kb<1024) return kb.toFixed(1)+' KB'; const mb=kb/1024; if(mb<1024) return mb.toFixed(1)+' MB'; return (mb/1024).toFixed(2)+' GB';}
 
+// ===== Preview (PDF & Video fixed) =====
 function previewFile(file){
-const blob=new Blob([file.data],{type:file.mime});
-const url=URL.createObjectURL(blob);
-const area=document.getElementById('previewArea'); area.innerHTML='';
-const wm=document.getElementById('wmText'); wm.textContent=`Confidential • ${new Date().toLocaleDateString()}`;
-if(file.mime==='application/pdf'){const iframe=document.createElement('iframe'); iframe.className='preview'; iframe.src=url; iframe.setAttribute("sandbox","allow-same-origin"); iframe.style.pointerEvents="none"; area.appendChild(iframe);}
-else if(file.mime.startsWith('video/')){const vid=document.createElement('video'); vid.className='preview'; vid.controls=true; vid.src=url; vid.oncontextmenu=e=>e.preventDefault(); area.appendChild(vid);}
-else{area.textContent='প্রিভিউ নেই — ডাউনলোড করুন।';}
+  const blob=new Blob([file.data],{type:file.mime});
+  const url=URL.createObjectURL(blob);
+  const area=document.getElementById('previewArea'); area.innerHTML='';
+  const wm=document.getElementById('wmText'); wm.textContent=`Confidential • ${new Date().toLocaleDateString()}`;
+  if(file.mime==='application/pdf'){
+    const iframe=document.createElement('iframe');
+    iframe.className='preview';
+    iframe.src=url;
+    iframe.style.width='100%';
+    iframe.style.height='360px';
+    area.appendChild(iframe);
+  } else if(file.mime.startsWith('video/')){
+    const vid=document.createElement('video');
+    vid.className='preview';
+    vid.controls=true;
+    vid.autoplay=false;
+    vid.src=url;
+    vid.oncontextmenu=e=>e.preventDefault();
+    area.appendChild(vid);
+  } else { area.textContent='প্রিভিউ নেই — ডাউনলোড করুন।'; }
 }
 
+// ===== Download =====
 function downloadFile(file){const blob=new Blob([file.data],{type:file.mime}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);}
 
+// ===== UI Update =====
 async function updateUI(){
-const folders=await getFolders(); const foldersList=document.getElementById('foldersList'); const targetSelect=document.getElementById('targetFolderSelect');
-foldersList.innerHTML=''; targetSelect.innerHTML='';
-const defaultOpt=document.createElement('option'); defaultOpt.value=''; defaultOpt.text='--- নির্বাচন করুন ---'; targetSelect.appendChild(defaultOpt);
-folders.forEach(f=>{const div=document.createElement('div'); div.className='folder'; div.textContent=f.name; div.dataset.id=f.id;
-div.onclick=()=>{currentFolder=f.id; Array.from(foldersList.children).forEach(ch=>ch.classList.remove('active')); div.classList.add('active'); updateFiles();}; foldersList.appendChild(div);
-const opt=document.createElement('option'); opt.value=f.id; opt.text=f.name; targetSelect.appendChild(opt);});
+  const folders=await getFolders(); const foldersList=document.getElementById('foldersList'); const targetSelect=document.getElementById('targetFolderSelect');
+  foldersList.innerHTML=''; targetSelect.innerHTML='';
+  const defaultOpt=document.createElement('option'); defaultOpt.value=''; defaultOpt.text='--- নির্বাচন করুন ---'; targetSelect.appendChild(defaultOpt);
+  folders.forEach(f=>{const div=document.createElement('div'); div.className='folder'; div.textContent=f.name; div.dataset.id=f.id;
+  div.onclick=()=>{currentFolder=f.id; Array.from(foldersList.children).forEach(ch=>ch.classList.remove('active')); div.classList.add('active'); updateFiles();}; foldersList.appendChild(div);
+  const opt=document.createElement('option'); opt.value=f.id; opt.text=f.name; targetSelect.appendChild(opt);});
 }
 
 async function updateFiles(){if(!currentFolder){document.getElementById('filesList').innerHTML=''; return;}
@@ -265,27 +242,21 @@ document.getElementById('uploadBtn').addEventListener('click', async ()=>{
   inp.value=''; await updateFiles();
 });
 
-// ===== Export ZIP =====
+// ===== Export/Import & Clear =====
 document.getElementById('exportAllBtn').addEventListener('click', async ()=>{
   const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE); const req=store.getAll();
   req.onsuccess=async e=>{const all=e.target.result; if(!all.length){alert('কোনো ফাইল নেই'); return;}
     const zip=new JSZip(); all.forEach(item=>{if(item.type==='file') zip.file(item.name,new Blob([item.data],{type:item.mime}));});
     const blob=await zip.generateAsync({type:'blob'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='office_export.zip'; a.click(); URL.revokeObjectURL(url);}; req.onerror=e=>alert('ZIP export error');});
-
-// ===== Import ZIP =====
 document.getElementById('importZipBtn').addEventListener('click', ()=>document.getElementById('importZipFile').click());
 document.getElementById('importZipFile').addEventListener('change', async e=>{
   const file=e.target.files[0]; if(!file) return;
-  const zip=await JSZip.loadAsync(file); const folderName=file.name.replace('.zip',''); const folders=await getFolders();
+  const zip=await JSZip.loadAsync(file); const folderName=file.name.replace('.zip',''); let folders=await getFolders();
   let folder=folders.find(f=>f.name===folderName); if(!folder){await createFolder(folderName); folders=await getFolders(); folder=folders.find(f=>f.name===folderName);}
   for(const fname in zip.files){const fdata=await zip.files[fname].async('arraybuffer'); await addFileToFolder(new File([fdata],fname,{type:'application/octet-stream'}),folder.id);}
   e.target.value=''; await updateUI(); if(folder) currentFolder=folder.id; await updateFiles();
 });
-
-// ===== Clear all =====
 document.getElementById('clearAllBtn').addEventListener('click', async ()=>{if(confirm('সব মুছতে চান?')){const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).clear(); currentFolder=null; await updateUI(); document.getElementById('previewArea').innerHTML='';}});
-
-// ===== Change password =====
 document.getElementById('changePassBtn').addEventListener('click', ()=>{showSetup();});
 
 </script>
