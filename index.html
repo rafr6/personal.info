@@ -3,495 +3,185 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>File Vault — IndexedDB Preview (Final)</title>
+  <title>File Vault — Final PDF Fixed</title>
   <style>
-    :root{--accent:#0b74de}
-    body{font-family:system-ui,Segoe UI,Roboto,'Noto Sans Bengali',Arial;margin:0;background:#f5f7fb;color:#111}
-    .wrap{max-width:900px;margin:26px auto;padding:18px}
-    .card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 8px 24px rgba(10,20,40,.06)}
+    body{font-family:Arial, sans-serif;background:#f4f6fa;margin:0;padding:0;color:#111}
+    .wrap{max-width:900px;margin:20px auto;padding:16px}
+    .card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.1);margin-bottom:16px}
     h1{margin:0 0 8px;font-size:20px}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    input,button,select{padding:8px;border-radius:8px;border:1px solid #ddd;font-size:14px}
-    button{background:var(--accent);color:#fff;border:none;cursor:pointer}
+    input,button{padding:8px;border-radius:6px;border:1px solid #ccc;font-size:14px}
+    button{background:#0b74de;color:#fff;border:none;cursor:pointer}
     .folders{margin-top:12px}
-    .folder{padding:10px;border-radius:8px;border:1px solid #eee;margin-bottom:10px;background:#fafafa}
+    .folder{padding:10px;border-radius:8px;border:1px solid #eee;margin-bottom:12px;background:#fafafa}
     .file-item{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px;background:#fff;margin:6px 0;border:1px solid #eee}
     .muted{color:#666;font-size:13px}
-    iframe,video,img,embed{width:100%;height:60vh;border-radius:8px;border:1px solid #ddd;background:#000}
-    @media(max-width:720px){ iframe,video,img,embed{height:45vh} }
-    .actions button{margin-left:6px;padding:6px 8px;background:#0b74de}
+    iframe,embed,video,img{width:100%;height:60vh;border:1px solid #ccc;border-radius:8px}
+    @media(max-width:720px){ iframe,embed,video,img{height:45vh} }
+    .actions button{margin-left:6px;padding:6px 8px;font-size:13px}
     .danger{background:#d9534f}
-    .small{font-size:13px;padding:6px 8px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card" id="loginCard">
-      <h1>🔐 File Vault — লগইন</h1>
-      <div class="muted">প্রথমবার এখানে পাসওয়ার্ড সেট করুন।</div>
-      <div style="margin-top:10px" class="row">
+      <h1>🔐 File Vault</h1>
+      <div class="muted">প্রথমবার একটি পাসওয়ার্ড সেট করুন।</div>
+      <div style="margin-top:10px">
         <input id="pw" type="password" placeholder="পাসওয়ার্ড দিন" />
         <button id="btnLogin">লগইন</button>
       </div>
     </div>
 
-    <div class="card" id="appCard" style="margin-top:18px;display:none">
+    <div class="card" id="appCard" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <h1>📁 File Vault</h1>
-          <div class="muted">IndexedDB ব্যবহার করে ব্লবভাবে ফাইল সেভ করে।</div>
-        </div>
-        <div>
-          <button id="btnLogout" class="small">লগআউট</button>
-        </div>
+        <h1>📁 File Vault</h1>
+        <button id="btnLogout">লগআউট</button>
       </div>
-
-      <hr style="margin:12px 0">
-
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <input id="newFolderName" type="text" placeholder="নতুন ফোল্ডারের নাম লিখুন" />
-        <button id="btnCreate">ফোল্ডার তৈরি</button>
-        <button id="btnExport" class="small">Data Export (JSON)</button>
-        <button id="btnImport" class="small">Import JSON</button>
-        <input id="importFile" type="file" accept="application/json" style="display:none" />
-      </div>
+      <hr>
+      <input id="newFolderName" type="text" placeholder="নতুন ফোল্ডারের নাম" />
+      <button id="btnCreate">ফোল্ডার তৈরি</button>
 
       <div id="foldersContainer" class="folders"></div>
 
-      <h3 style="margin-top:14px">Preview</h3>
+      <h3>Preview</h3>
       <div id="previewArea" class="previewArea"></div>
     </div>
   </div>
 
 <script>
-/*
- Final IndexedDB-based File Vault
- - Stores file blobs in IndexedDB (store 'files'), metadata in object store or same record.
- - Preview uses URL.createObjectURL(blob) -> works better than data: URLs
- - Provides fallback download/open link if browser cannot render embedded PDF
-*/
-
-const DB_NAME = 'filevault_v2';
+const DB_NAME = 'filevault_pdf_fixed';
 const STORE = 'files';
-const DB_VERSION = 1;
 let db = null;
 
-// Open / init DB
 function openDb(){
-  return new Promise((res, rej) => {
-    const r = indexedDB.open(DB_NAME, DB_VERSION);
-    r.onupgradeneeded = ev => {
+  return new Promise((res, rej)=>{
+    const r = indexedDB.open(DB_NAME,1);
+    r.onupgradeneeded = ev=>{
       const idb = ev.target.result;
       if(!idb.objectStoreNames.contains(STORE)){
-        const os = idb.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+        const os = idb.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
         os.createIndex('folder','folder',{unique:false});
-        os.createIndex('name','name',{unique:false});
       }
     };
-    r.onsuccess = e => { db = e.target.result; res(db); };
-    r.onerror = e => { rej(e); };
+    r.onsuccess=e=>{db=e.target.result;res(db);}
+    r.onerror=e=>rej(e);
   });
 }
 
-// Add file (blob) to DB
-function addFileToDB(folder, file){
-  return new Promise((res, rej) => {
-    const tx = db.transaction(STORE,'readwrite');
-    const store = tx.objectStore(STORE);
-    const rec = { folder, name: file.name, type: file.type || 'application/octet-stream', size: file.size, created: Date.now(), blob: file };
-    const req = store.add(rec);
-    req.onsuccess = ()=> res(req.result);
-    req.onerror = e => rej(e);
+function addFile(folder,file){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite');
+    const st=tx.objectStore(STORE);
+    const rec={folder,name:file.name,type:file.type,size:file.size,blob:file,created:Date.now()};
+    const req=st.add(rec);
+    req.onsuccess=()=>res(true);
+    req.onerror=e=>rej(e);
   });
 }
 
-// Get all files (optionally by folder)
-function getAllFiles(){
-  return new Promise((res, rej) => {
-    const tx = db.transaction(STORE,'readonly');
-    const store = tx.objectStore(STORE);
-    const req = store.getAll();
-    req.onsuccess = ()=> res(req.result);
-    req.onerror = e => rej(e);
+function getFiles(folder){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readonly');
+    const st=tx.objectStore(STORE).index('folder');
+    const req=st.getAll(IDBKeyRange.only(folder));
+    req.onsuccess=()=>res(req.result);
+    req.onerror=e=>rej(e);
   });
 }
 
-function getFilesByFolder(folder){
-  return new Promise((res, rej) => {
-    const tx = db.transaction(STORE,'readonly');
-    const store = tx.objectStore(STORE);
-    const idx = store.index('folder');
-    const range = IDBKeyRange.only(folder);
-    const req = idx.getAll(range);
-    req.onsuccess = ()=> res(req.result);
-    req.onerror = e => rej(e);
+function deleteFile(id){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(STORE,'readwrite');
+    const st=tx.objectStore(STORE);
+    const req=st.delete(id);
+    req.onsuccess=()=>res(true);
+    req.onerror=e=>rej(e);
   });
 }
 
-function deleteFileById(id){
-  return new Promise((res, rej) => {
-    const tx = db.transaction(STORE,'readwrite');
-    const store = tx.objectStore(STORE);
-    const req = store.delete(Number(id));
-    req.onsuccess = ()=> res(true);
-    req.onerror = e => rej(e);
-  });
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));}
+function readableSize(b){if(b<1024)return b+" B";if(b<1024*1024)return (b/1024).toFixed(1)+" KB";return (b/1024/1024).toFixed(1)+" MB";}
+
+// UI
+const pwInput=document.getElementById('pw');
+document.getElementById('btnLogin').onclick=()=>{
+  const p=pwInput.value.trim();
+  const saved=localStorage.getItem('fv_pass');
+  if(!saved){localStorage.setItem('fv_pass',p);start();}
+  else if(p===saved)start();
+  else alert('ভুল পাসওয়ার্ড');
+};
+document.getElementById('btnLogout').onclick=()=>{
+  document.getElementById('appCard').style.display="none";
+  document.getElementById('loginCard').style.display="block";
+};
+
+async function start(){
+  await openDb();
+  document.getElementById('loginCard').style.display="none";
+  document.getElementById('appCard').style.display="block";
+  render();
 }
 
-async function clearPreviewObjectURLs(){
-  // revoke previously created object URLs to free memory
-  if(window._pv_urls && window._pv_urls.length){
-    window._pv_urls.forEach(u=>URL.revokeObjectURL(u));
+document.getElementById('btnCreate').onclick=()=>render();
+
+async function render(){
+  const cont=document.getElementById('foldersContainer');
+  cont.innerHTML='';
+  const folder=document.getElementById('newFolderName').value.trim()||'Default';
+  const div=document.createElement('div');
+  div.className='folder';
+  div.innerHTML=`<b>📂 ${escapeHtml(folder)}</b> 
+    <input type="file" multiple>`;
+  const list=document.createElement('div');
+  const files=await getFiles(folder);
+  if(files.length===0){
+    list.innerHTML='<div class="muted">ফোল্ডার খালি</div>';
+  }else{
+    for(const f of files){
+      const item=document.createElement('div');
+      item.className='file-item';
+      item.innerHTML=`<span>${escapeHtml(f.name)} <span class="muted">(${readableSize(f.size)})</span></span>`;
+      const actions=document.createElement('div');
+      const b1=document.createElement('button');b1.textContent='Preview';b1.onclick=()=>preview(f);
+      const b2=document.createElement('button');b2.textContent='Download';b2.onclick=()=>download(f);
+      const b3=document.createElement('button');b3.textContent='Delete';b3.className='danger';b3.onclick=async()=>{await deleteFile(f.id);render();};
+      actions.append(b1,b2,b3);
+      item.appendChild(actions);
+      list.appendChild(item);
+    }
   }
-  window._pv_urls = [];
-}
-
-// ---------- UI & App logic ----------
-const btnLogin = document.getElementById('btnLogin');
-const btnLogout = document.getElementById('btnLogout');
-const loginCard = document.getElementById('loginCard');
-const appCard = document.getElementById('appCard');
-const pwInput = document.getElementById('pw');
-const btnCreate = document.getElementById('btnCreate');
-const newFolderName = document.getElementById('newFolderName');
-const foldersContainer = document.getElementById('foldersContainer');
-const previewArea = document.getElementById('previewArea');
-const btnExport = document.getElementById('btnExport');
-const btnImport = document.getElementById('btnImport');
-const importFile = document.getElementById('importFile');
-
-btnLogin.addEventListener('click', async ()=>{
-  const p = pwInput.value.trim();
-  const saved = localStorage.getItem('fv_pass_v2');
-  if(!saved){
-    if(!p){ alert('পাসওয়ার্ড দিন'); return; }
-    localStorage.setItem('fv_pass_v2', p);
-    await startApp();
-  } else {
-    if(p === saved) await startApp();
-    else alert('ভুল পাসওয়ার্ড');
-  }
-});
-
-btnLogout.addEventListener('click', ()=>{
-  appCard.style.display = 'none';
-  loginCard.style.display = 'block';
-  pwInput.value = '';
-  previewArea.innerHTML = '';
-});
-
-async function startApp(){
-  try{
-    await openDb();
-    loginCard.style.display = 'none';
-    appCard.style.display = 'block';
-    renderUI();
-  }catch(err){
-    console.error(err);
-    alert('IndexedDB খুলতে সমস্যা হয়েছে — ব্রাউজার সাপোর্ট চেক করুন।');
-  }
-}
-
-btnCreate.addEventListener('click', async ()=>{
-  const name = newFolderName.value.trim();
-  if(!name) return alert('ফোল্ডারের নাম লিখো');
-  // folders are implicit (by 'folder' field in records). No separate list needed.
-  // But to show empty folder, we create a marker record with type 'folder-marker' and zero size.
-  await addFolderMarker(name);
-  newFolderName.value = '';
-  renderUI();
-});
-
-// Create a marker record to represent empty folder
-function addFolderMarker(name){
-  return new Promise((res, rej)=>{
-    const tx = db.transaction(STORE,'readwrite');
-    const store = tx.objectStore(STORE);
-    const rec = { folder: name, name: '__FOLDER_MARKER__', type: 'folder/marker', size: 0, created: Date.now(), blob: null };
-    const req = store.add(rec);
-    req.onsuccess = ()=>res(true);
-    req.onerror = e => {
-      // if duplicate allowed, ignore
-      res(false);
-    };
-  });
-}
-
-async function getFolderNames(){
-  const all = await getAllFiles();
-  const set = new Set(all.map(r=>r.folder).filter(Boolean));
-  return Array.from(set).sort((a,b)=>a.localeCompare(b));
-}
-
-async function renderUI(){
-  await clearPreviewObjectURLs();
-  foldersContainer.innerHTML = '';
-  const folders = await getFolderNames();
-  if(folders.length === 0){
-    foldersContainer.innerHTML = '<div class="muted" style="padding:10px">কোনো ফোল্ডার নেই — নতুন ফোল্ডার তৈরি করুন।</div>';
-    return;
-  }
-  for(const name of folders){
-    const wrapper = document.createElement('div');
-    wrapper.className = 'folder';
-
-    const title = document.createElement('div');
-    title.innerHTML = `<strong>📂 ${escapeHtml(name)}</strong>`;
-    wrapper.appendChild(title);
-
-    // file input
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.addEventListener('change', async (e)=>{
-      const files = e.target.files;
-      if(!files || files.length === 0) return;
-      // upload each file as blob directly to IndexedDB
-      for(const f of files){
-        try{
-          await addFileToDB(name, f);
-        }catch(err){
-          console.error('add file err', err);
-          alert('ফাইল আপলোডে সমস্যা হয়েছে: ' + f.name);
-        }
-      }
-      input.value = '';
-      renderUI();
-    });
-    wrapper.appendChild(input);
-
-    // file list for this folder
-    const listDiv = document.createElement('div');
-    listDiv.style.marginTop = '8px';
-
-    const records = await getFilesByFolder(name);
-    // filter out folder markers from list display
-    const files = records.filter(r => !(r.type === 'folder/marker' && r.name === '__FOLDER_MARKER__'));
-    if(files.length === 0){
-      const p = document.createElement('div');
-      p.className = 'muted';
-      p.textContent = 'ফোল্ডারে কোনো ফাইল নেই।';
-      listDiv.appendChild(p);
-    } else {
-      for(const rec of files){
-        const fi = document.createElement('div');
-        fi.className = 'file-item';
-        fi.innerHTML = `<div><strong>${escapeHtml(rec.name)}</strong> <div class="muted small">${readableSize(rec.size)}</div></div>`;
-        const actions = document.createElement('div');
-        // preview
-        const btnPreview = document.createElement('button');
-        btnPreview.textContent = 'Preview';
-        btnPreview.className = 'small';
-        btnPreview.addEventListener('click', ()=>showPreview(rec.id));
-        actions.appendChild(btnPreview);
-        // download
-        const btnD = document.createElement('button');
-        btnD.textContent = 'Download';
-        btnD.className = 'small';
-        btnD.addEventListener('click', ()=>downloadById(rec.id, rec.name));
-        actions.appendChild(btnD);
-        // delete
-        const btnDel = document.createElement('button');
-        btnDel.textContent = 'Delete';
-        btnDel.className = 'small danger';
-        btnDel.addEventListener('click', async ()=>{
-          if(confirm('ফাইল মুছবেন?')){
-            await deleteFileById(rec.id);
-            renderUI();
-            previewArea.innerHTML = '';
-          }
-        });
-        actions.appendChild(btnDel);
-
-        fi.appendChild(actions);
-        listDiv.appendChild(fi);
-      }
-    }
-    wrapper.appendChild(listDiv);
-    foldersContainer.appendChild(wrapper);
-  }
-}
-
-// Show preview by record id
-function showPreview(id){
-  const tx = db.transaction(STORE,'readonly');
-  const store = tx.objectStore(STORE);
-  const req = store.get(Number(id));
-  req.onsuccess = async (e) => {
-    const rec = e.target.result;
-    if(!rec){
-      alert('ফাইল পাওয়া যায়নি');
-      return;
-    }
-    // If blob is null (shouldn't for real files) -> fallback
-    if(!rec.blob){
-      previewArea.innerHTML = `<div class="muted">প্রিভিউ উপলব্ধ নয়। <a href="#" onclick="location.reload()">Try</a></div>`;
-      return;
-    }
-    await clearPreviewObjectURLs();
-    const blob = rec.blob;
-    const url = URL.createObjectURL(blob);
-    window._pv_urls = window._pv_urls || [];
-    window._pv_urls.push(url);
-
-    // decide how to render
-    previewArea.innerHTML = '';
-    const type = rec.type || '';
-    // PDF rendering: try embed/iframe; some mobile browsers can't render — show fallback link as well
-    if(type === 'application/pdf' || rec.name.toLowerCase().endsWith('.pdf')){
-      // First try embed
-      const embed = document.createElement('embed');
-      embed.src = url;
-      embed.type = 'application/pdf';
-      embed.style.width = '100%';
-      embed.style.height = '60vh';
-      embed.onerror = ()=>{
-        // fallback: show link
-        previewArea.innerHTML = `<div class="muted">এই ব্রাউজার সরাসরি PDF এমবেড সাপোর্ট নাও করতে পারে। <a href="${url}" target="_blank" rel="noopener">Open in new tab</a> (or Download)</div>`;
-      };
-      // Some browsers don't call onerror for embed, but still show blank; still provide link below.
-      previewArea.appendChild(embed);
-      const fallback = document.createElement('div');
-      fallback.style.marginTop = '8px';
-      fallback.innerHTML = `<a href="${url}" target="_blank" rel="noopener">Open PDF in new tab / Download</a>`;
-      previewArea.appendChild(fallback);
-    }
-    else if(type.startsWith('video/') || rec.name.match(/\.mp4$|\.webm$|\.ogg$/i)){
-      const vid = document.createElement('video');
-      vid.controls = true;
-      vid.src = url;
-      vid.style.width = '100%';
-      vid.style.height = '60vh';
-      vid.setAttribute('playsinline','');
-      previewArea.appendChild(vid);
-    }
-    else if(type.startsWith('image/') || rec.name.match(/\.jpg$|\.jpeg$|\.png$|\.gif$/i)){
-      const img = document.createElement('img');
-      img.src = url;
-      img.style.maxHeight = '60vh';
-      img.alt = rec.name;
-      previewArea.appendChild(img);
-    } else {
-      // generic fallback: provide download link and attempt to render with iframe
-      const tryFrame = document.createElement('iframe');
-      tryFrame.src = url;
-      tryFrame.style.height = '60vh';
-      previewArea.appendChild(tryFrame);
-      const link = document.createElement('div');
-      link.style.marginTop = '8px';
-      link.innerHTML = `<a href="${url}" target="_blank" rel="noopener" download="${escapeHtml(rec.name)}">Open / Download ${escapeHtml(rec.name)}</a>`;
-      previewArea.appendChild(link);
-    }
+  div.querySelector('input').onchange=async e=>{
+    for(const f of e.target.files){await addFile(folder,f);}
+    render();
   };
-  req.onerror = (e)=>{ alert('ফাইল লোড করতে সমস্যা'); console.error(e); };
+  div.appendChild(list);
+  cont.appendChild(div);
 }
 
-// download by id
-function downloadById(id, filename){
-  const tx = db.transaction(STORE,'readonly');
-  const store = tx.objectStore(STORE);
-  const req = store.get(Number(id));
-  req.onsuccess = e=>{
-    const rec = e.target.result;
-    if(!rec || !rec.blob){ alert('ফাইল পাওয়া যায়নি'); return; }
-    const url = URL.createObjectURL(rec.blob);
-    // create anchor
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || rec.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 1500);
-  };
-}
-
-// helper: size
-function readableSize(bytes){
-  if(!bytes && bytes !== 0) return '';
-  if(bytes < 1024) return bytes + ' B';
-  if(bytes < 1024*1024) return Math.round(bytes/1024) + ' KB';
-  return Math.round(bytes/(1024*1024)) + ' MB';
-}
-
-// helper: escape html
-function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-// Export / Import (simple JSON metadata + blobs not included). We'll export metadata + blob as base64 may be heavy.
-// For portability we'll export metadata and blobs as ArrayBuffers turned into base64 (may be large) — user asked full export option earlier.
-// NOTE: This is optional — large DB export may exceed memory; use cautiously.
-btnExport.addEventListener('click', async ()=>{
-  if(!confirm('Export সব ফাইল JSON-এ? (বড় ফাইল হলে সময় লাগবে)')) return;
-  // gather all records and convert blobs to base64
-  const all = await getAllFiles();
-  const out = [];
-  for(const r of all){
-    if(r.blob){
-      const b64 = await blobToBase64(r.blob);
-      out.push({...r, blobBase64: b64});
-    } else {
-      out.push({...r});
-    }
+function preview(f){
+  const area=document.getElementById('previewArea');
+  area.innerHTML='';
+  const url=URL.createObjectURL(f.blob);
+  if(f.type==='application/pdf'||f.name.endsWith('.pdf')){
+    const em=document.createElement('embed');
+    em.src=url;em.type='application/pdf';
+    area.appendChild(em);
+    const link=document.createElement('div');
+    link.innerHTML=`<a href="${url}" target="_blank">নতুন ট্যাবে PDF খুলুন</a>`;
+    area.appendChild(link);
+  }else if(f.type.startsWith('video/')){
+    const v=document.createElement('video');v.controls=true;v.src=url;area.appendChild(v);
+  }else if(f.type.startsWith('image/')){
+    const i=document.createElement('img');i.src=url;area.appendChild(i);
+  }else{
+    const a=document.createElement('a');a.href=url;a.textContent='ডাউনলোড করুন';area.appendChild(a);
   }
-  const text = JSON.stringify(out);
-  const blob = new Blob([text], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'filevault-export.json'; a.click(); a.remove();
-  URL.revokeObjectURL(url);
-});
-
-// Import JSON
-btnImport.addEventListener('click', ()=> importFile.click());
-importFile.addEventListener('change', async (e)=>{
-  const f = e.target.files[0];
-  if(!f) return;
-  const txt = await f.text();
-  let arr;
-  try{ arr = JSON.parse(txt); } catch(err){ alert('Invalid JSON'); return; }
-  // insert into DB
-  for(const rec of arr){
-    let blob = null;
-    if(rec.blobBase64){
-      blob = base64ToBlob(rec.blobBase64, rec.type || 'application/octet-stream');
-    }
-    const tx = db.transaction(STORE,'readwrite');
-    const store = tx.objectStore(STORE);
-    const newRec = { folder: rec.folder || 'root', name: rec.name || 'noname', type: rec.type || 'application/octet-stream', size: rec.size || 0, created: rec.created || Date.now(), blob: blob };
-    store.add(newRec);
-    await new Promise(s=> (tx.oncomplete = s));
-  }
-  alert('Import সম্পন্ন।');
-  renderUI();
-});
-
-// blob <-> base64 helpers
-function blobToBase64(b){
-  return new Promise((res, rej)=>{
-    const fr = new FileReader();
-    fr.onload = ()=> res(fr.result.split(',')[1]);
-    fr.onerror = rej;
-    fr.readAsDataURL(b);
-  });
 }
-function base64ToBlob(base64, type){
-  const bin = atob(base64);
-  const len = bin.length;
-  const buf = new Uint8Array(len);
-  for(let i=0;i<len;i++) buf[i] = bin.charCodeAt(i);
-  return new Blob([buf], {type});
+function download(f){
+  const url=URL.createObjectURL(f.blob);
+  const a=document.createElement('a');a.href=url;a.download=f.name;a.click();
 }
-
-// Auto-start if password already set (optional convenience)
-(function autoStart(){
-  const saved = localStorage.getItem('fv_pass_v2');
-  if(saved){
-    // show login UI but focus password
-    pwInput.focus();
-  }
-})();
-
-// End of script
 </script>
 </body>
 </html>
