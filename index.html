@@ -70,9 +70,6 @@ iframe, video{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:non
     </div>
 
     <div class="top-actions" style="margin-top:12px">
-      <button id="exportAllBtn">সব এক্সপোর্ট (ZIP)</button>
-      <button id="importZipBtn">ইম্পোর্ট ZIP (বিকল্প)</button>
-      <input id="importZipFile" type="file" accept=".zip" style="display:none" />
       <button id="clearAllBtn">সব মুছুন</button>
       <button id="changePassBtn" style="background:#0ea5a4">পাসওয়ার্ড পরিবর্তন</button>
     </div>
@@ -97,7 +94,6 @@ iframe, video{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:non
 <button id="doSetPass">সেভ করুন</button>
 <button id="cancelSet" style="background:#94a3b8">বাতিল</button>
 </div>
-<div class="hint">পাসওয়ার্ড লস হলে রিকভার করার উপায় নেই।</div>
 </div>
 
 <div id="loginArea">
@@ -171,14 +167,14 @@ function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=byte
 
 // ===== Preview =====
 function previewFile(file){
-  const blob=new Blob([file.data],{type:file.mime});
+  const blob=new Blob([file.data.buffer],{type:file.mime});
   const url=URL.createObjectURL(blob);
   const area=document.getElementById('previewArea'); area.innerHTML='';
   if(file.mime==='application/pdf'){
     const iframe=document.createElement('iframe');
     iframe.src=url; iframe.width='100%'; iframe.height='480px'; iframe.style.border='1px solid #ccc'; area.appendChild(iframe);
   } else if(file.mime.startsWith('video/')){
-    const vid=document.createElement('video'); vid.controls=true; vid.src=url; vid.width='100%'; area.appendChild(vid);
+    const vid=document.createElement('video'); vid.controls=true; vid.src=url; vid.style.width='100%'; area.appendChild(vid);
   } else { area.textContent='প্রিভিউ নেই'; }
 }
 
