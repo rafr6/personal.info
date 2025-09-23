@@ -4,152 +4,170 @@
   <meta charset="UTF-8">
   <title>File Vault</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:0; }
-    .login, .app { max-width:650px; margin:40px auto; padding:20px; background:#fff; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,.1); }
-    h2 { text-align:center; }
+    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; }
+    .box { max-width:800px; margin:30px auto; padding:20px; background:#fff; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,.1); }
+    h2,h3 { text-align:center; }
     .hidden { display:none; }
-    .folder { margin:15px 0; padding:10px; background:#eee; border-radius:6px; }
-    .file-list { margin-top:10px; }
-    .file-item { padding:5px; background:#fafafa; margin:5px 0; border:1px solid #ddd; border-radius:4px; display:flex; justify-content:space-between; align-items:center; }
-    iframe, video, img { width:100%; height:400px; margin-top:10px; border:1px solid #ccc; border-radius:6px; background:#000; }
-    button { margin-left:4px; }
+    input[type="text"], input[type="password"], input[type="file"] {
+      padding:8px; margin:5px 0; border:1px solid #ccc; border-radius:5px; width:100%;
+    }
+    button { padding:6px 12px; margin:2px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; }
+    button:hover { background:#0056b3; }
+    .folder { margin:15px 0; padding:10px; background:#f8f9fa; border-radius:6px; border:1px solid #ddd; }
+    .file-list { margin-top:8px; }
+    .file-item { padding:6px; margin:5px 0; background:#fff; border:1px solid #ddd; border-radius:4px; display:flex; justify-content:space-between; align-items:center; }
+    iframe, video, img { width:100%; max-height:400px; margin-top:10px; border:1px solid #ccc; border-radius:6px; background:#000; }
+    @media(max-width:600px){ iframe,video,img{max-height:250px;} }
   </style>
 </head>
 <body>
-  <div class="login" id="loginBox">
+  <!-- Login Box -->
+  <div class="box" id="loginBox">
     <h2>লগইন</h2>
-    <input type="password" id="passwordInput" placeholder="পাসওয়ার্ড দিন"> <br><br>
+    <input type="password" id="passwordInput" placeholder="পাসওয়ার্ড দিন">
     <button onclick="login()">লগইন</button>
   </div>
 
-  <div class="app hidden" id="appBox">
-    <h2>File Vault</h2>
+  <!-- Main App -->
+  <div class="box hidden" id="appBox">
+    <h2>📁 File Vault</h2>
     <button onclick="logout()">লগআউট</button>
-    <h3>নতুন ফোল্ডার</h3>
-    <input type="text" id="folderName" placeholder="ফোল্ডারের নাম"> 
+
+    <h3>নতুন ফোল্ডার তৈরি</h3>
+    <input type="text" id="folderName" placeholder="ফোল্ডারের নাম দিন">
     <button onclick="createFolder()">তৈরি</button>
+
     <div id="folders"></div>
+
     <h3>Preview</h3>
     <div id="preview"></div>
   </div>
 
-  <script>
-    const PASS_KEY = "filevault_pass";
-    let data = JSON.parse(localStorage.getItem("filevault_data") || "{}");
+<script>
+  const PASS_KEY = "filevault_pass";
+  let data = JSON.parse(localStorage.getItem("filevault_data") || "{}");
 
-    function login(){
-      let pass = document.getElementById('passwordInput').value.trim();
-      let saved = localStorage.getItem(PASS_KEY);
-      if(!saved){
-        if(pass){
-          localStorage.setItem(PASS_KEY, pass);
-          alert("নতুন পাসওয়ার্ড সেট হয়েছে!");
-          showApp();
-        } else {
-          alert("পাসওয়ার্ড লিখুন");
-        }
+  // Login system
+  function login(){
+    let pass = document.getElementById('passwordInput').value.trim();
+    let saved = localStorage.getItem(PASS_KEY);
+    if(!saved){
+      if(pass){
+        localStorage.setItem(PASS_KEY, pass);
+        alert("✅ নতুন পাসওয়ার্ড সেট হয়েছে!");
+        showApp();
       } else {
-        if(pass === saved){ showApp(); }
-        else { alert("ভুল পাসওয়ার্ড!"); }
+        alert("পাসওয়ার্ড লিখুন");
       }
+    } else {
+      if(pass === saved){ showApp(); }
+      else { alert("❌ ভুল পাসওয়ার্ড!"); }
     }
+  }
 
-    function logout(){
-      document.getElementById('appBox').classList.add('hidden'); 
-      document.getElementById('loginBox').classList.remove('hidden'); 
-    }
+  function logout(){
+    document.getElementById('appBox').classList.add('hidden');
+    document.getElementById('loginBox').classList.remove('hidden');
+  }
 
-    function showApp(){
-      document.getElementById('loginBox').classList.add('hidden'); 
-      document.getElementById('appBox').classList.remove('hidden'); 
-      renderFolders();
-    }
+  function showApp(){
+    document.getElementById('loginBox').classList.add('hidden');
+    document.getElementById('appBox').classList.remove('hidden');
+    renderFolders();
+  }
 
-    function save(){ localStorage.setItem("filevault_data", JSON.stringify(data)); }
+  function save(){ localStorage.setItem("filevault_data", JSON.stringify(data)); }
 
-    function createFolder(){
-      let name = document.getElementById('folderName').value.trim();
-      if(!name) return alert("ফোল্ডারের নাম লিখুন");
-      if(!data[name]) data[name] = [];
-      save();
-      renderFolders();
-      document.getElementById('folderName').value="";
-    }
+  // Create folder
+  function createFolder(){
+    let name = document.getElementById('folderName').value.trim();
+    if(!name) return alert("⚠ ফোল্ডারের নাম লিখুন");
+    if(!data[name]) data[name] = [];
+    save();
+    renderFolders();
+    document.getElementById('folderName').value="";
+  }
 
-    function renderFolders(){
-      let box = document.getElementById('folders');
-      box.innerHTML="";
-      Object.keys(data).forEach(folder=>{
-        let div = document.createElement('div');
-        div.className="folder";
-        let title = document.createElement('b');
-        title.textContent = folder;
-        div.appendChild(title);
+  // Render all folders
+  function renderFolders(){
+    let box = document.getElementById('folders');
+    box.innerHTML="";
+    Object.keys(data).forEach(folder=>{
+      let div = document.createElement('div');
+      div.className="folder";
+      let title = document.createElement('h4');
+      title.textContent = "📂 " + folder;
+      div.appendChild(title);
 
-        let input = document.createElement('input');
-        input.type = "file";
-        input.multiple = true;
-        input.onchange = (e)=>uploadFiles(folder, e.target.files);
-        div.appendChild(input);
+      let input = document.createElement('input');
+      input.type = "file";
+      input.multiple = true;
+      input.onchange = (e)=>uploadFiles(folder, e.target.files);
+      div.appendChild(input);
 
-        let list = document.createElement('div');
-        list.className="file-list";
-        data[folder].forEach((f,i)=>{
-          let item = document.createElement('div');
-          item.className="file-item";
-          item.innerHTML = `<span>${f.name}</span>`;
-          let actions = document.createElement('div');
-          actions.innerHTML = `
-            <button onclick="previewFile('${folder}',${i})">Preview</button>
-            <button onclick="downloadFile('${folder}',${i})">Download</button>
-            <button onclick="deleteFile('${folder}',${i})">Delete</button>`;
-          item.appendChild(actions);
-          list.appendChild(item);
-        });
-        div.appendChild(list);
-        box.appendChild(div);
+      let list = document.createElement('div');
+      list.className="file-list";
+      data[folder].forEach((f,i)=>{
+        let item = document.createElement('div');
+        item.className="file-item";
+        item.innerHTML = `<span>${f.name}</span>`;
+        let actions = document.createElement('div');
+        actions.innerHTML = `
+          <button onclick="previewFile('${folder}',${i})">👁 Preview</button>
+          <button onclick="downloadFile('${folder}',${i})">⬇ Download</button>
+          <button onclick="deleteFile('${folder}',${i})">🗑 Delete</button>`;
+        item.appendChild(actions);
+        list.appendChild(item);
       });
-    }
+      div.appendChild(list);
+      box.appendChild(div);
+    });
+  }
 
-    function uploadFiles(folder, files){
-      [...files].forEach(file=>{
-        let reader = new FileReader();
-        reader.onload = e=>{
-          data[folder].push({name:file.name, type:file.type, data:e.target.result});
-          save();
-          renderFolders();
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function previewFile(folder,i){
-      let f = data[folder][i];
-      let box = document.getElementById('preview');
-      if(f.type.includes('pdf')){
-        box.innerHTML = `<iframe src="${f.data}" frameborder="0"></iframe>`;
-      } else if(f.type.includes('video')){
-        box.innerHTML = `<video controls src="${f.data}"></video>`;
-      } else if(f.type.includes('image')){
-        box.innerHTML = `<img src="${f.data}">`;
-      } else {
-        box.innerHTML = `<a href="${f.data}" download="${f.name}">Download ${f.name}</a>`;
-      }
-    }
-
-    function downloadFile(folder,i){
-      let f = data[folder][i];
-      let a = document.createElement('a');
-      a.href = f.data; a.download = f.name; a.click();
-    }
-
-    function deleteFile(folder,i){
-      if(confirm("ফাইল মুছবেন?")){
-        data[folder].splice(i,1);
+  // Upload files
+  function uploadFiles(folder, files){
+    [...files].forEach(file=>{
+      let reader = new FileReader();
+      reader.onload = e=>{
+        data[folder].push({name:file.name, type:file.type, data:e.target.result});
         save();
         renderFolders();
-      }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Preview files
+  function previewFile(folder,i){
+    let f = data[folder][i];
+    let box = document.getElementById('preview');
+    if(f.type.includes('pdf')){
+      box.innerHTML = `<iframe src="${f.data}" frameborder="0"></iframe>`;
+    } else if(f.type.includes('video')){
+      box.innerHTML = `<video controls controlsList="nodownload" src="${f.data}"></video>`;
+    } else if(f.type.includes('image')){
+      box.innerHTML = `<img src="${f.data}" alt="${f.name}">`;
+    } else {
+      box.innerHTML = `<a href="${f.data}" download="${f.name}">📥 Download ${f.name}</a>`;
     }
-  </script>
+  }
+
+  // Download
+  function downloadFile(folder,i){
+    let f = data[folder][i];
+    let a = document.createElement('a');
+    a.href = f.data; a.download = f.name; a.click();
+  }
+
+  // Delete
+  function deleteFile(folder,i){
+    if(confirm("⚠ ফাইল মুছবেন?")){
+      data[folder].splice(i,1);
+      save();
+      renderFolders();
+      document.getElementById('preview').innerHTML="";
+    }
+  }
+</script>
 </body>
 </html>
