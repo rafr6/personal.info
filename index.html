@@ -25,7 +25,8 @@
     <h2>File Vault</h2>
     <button onclick="logout()">লগআউট</button>
     <h3>নতুন ফোল্ডার</h3>
-    <input type="text" id="folderName" placeholder="ফোল্ডারের নাম"> <button onclick="createFolder()">তৈরি</button>
+    <input type="text" id="folderName" placeholder="ফোল্ডারের নাম"> 
+    <button onclick="createFolder()">তৈরি</button>
     <div id="folders"></div>
     <div id="preview"></div>
   </div>
@@ -44,11 +45,17 @@
         else { alert("ভুল পাসওয়ার্ড!"); }
       }
     }
-    function logout(){ document.getElementById('appBox').classList.add('hidden'); document.getElementById('loginBox').classList.remove('hidden'); }
-    function showApp(){ document.getElementById('loginBox').classList.add('hidden'); document.getElementById('appBox').classList.remove('hidden'); renderFolders(); }
+    function logout(){ 
+      document.getElementById('appBox').classList.add('hidden'); 
+      document.getElementById('loginBox').classList.remove('hidden'); 
+    }
+    function showApp(){ 
+      document.getElementById('loginBox').classList.add('hidden'); 
+      document.getElementById('appBox').classList.remove('hidden'); 
+      renderFolders(); 
+    }
 
     let data = JSON.parse(localStorage.getItem("filevault_data")||"{}");
-
     function save(){ localStorage.setItem("filevault_data", JSON.stringify(data)); }
 
     function createFolder(){
@@ -66,7 +73,14 @@
       Object.keys(data).forEach(folder=>{
         let div = document.createElement('div');
         div.className="folder";
-        div.innerHTML = `<b>${folder}</b> <input type="file" multiple onchange="uploadFiles('${folder}', this.files)">`;
+        div.innerHTML = `<b>${folder}</b>`;
+        
+        let input = document.createElement('input');
+        input.type = "file";
+        input.multiple = true;
+        input.addEventListener("change", (e)=>uploadFiles(folder, e.target.files));
+        div.appendChild(input);
+
         let list = document.createElement('div');
         list.className="file-list";
         data[folder].forEach((f,i)=>{
