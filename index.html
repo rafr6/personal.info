@@ -5,13 +5,14 @@
   <title>File Vault</title>
   <style>
     body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; padding:0; }
-    .login, .app { max-width:600px; margin:50px auto; padding:20px; background:#fff; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,.1); }
+    .login, .app { max-width:650px; margin:40px auto; padding:20px; background:#fff; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,.1); }
     h2 { text-align:center; }
     .hidden { display:none; }
-    .folder { margin:10px 0; padding:10px; background:#eee; border-radius:6px; }
+    .folder { margin:15px 0; padding:10px; background:#eee; border-radius:6px; }
     .file-list { margin-top:10px; }
     .file-item { padding:5px; background:#fafafa; margin:5px 0; border:1px solid #ddd; border-radius:4px; display:flex; justify-content:space-between; align-items:center; }
-    iframe, video, img { width:100%; height:400px; margin-top:10px; border:1px solid #ccc; border-radius:6px; }
+    iframe, video, img { width:100%; height:400px; margin-top:10px; border:1px solid #ccc; border-radius:6px; background:#000; }
+    button { margin-left:4px; }
   </style>
 </head>
 <body>
@@ -28,39 +29,47 @@
     <input type="text" id="folderName" placeholder="ফোল্ডারের নাম"> 
     <button onclick="createFolder()">তৈরি</button>
     <div id="folders"></div>
+    <h3>Preview</h3>
     <div id="preview"></div>
   </div>
 
   <script>
     const PASS_KEY = "filevault_pass";
+    let data = JSON.parse(localStorage.getItem("filevault_data") || "{}");
+
     function login(){
-      let pass = document.getElementById('passwordInput').value;
+      let pass = document.getElementById('passwordInput').value.trim();
       let saved = localStorage.getItem(PASS_KEY);
       if(!saved){
-        localStorage.setItem(PASS_KEY, pass);
-        alert("নতুন পাসওয়ার্ড সেট হয়েছে!");
-        showApp();
+        if(pass){
+          localStorage.setItem(PASS_KEY, pass);
+          alert("নতুন পাসওয়ার্ড সেট হয়েছে!");
+          showApp();
+        } else {
+          alert("পাসওয়ার্ড লিখুন");
+        }
       } else {
         if(pass === saved){ showApp(); }
         else { alert("ভুল পাসওয়ার্ড!"); }
       }
     }
-    function logout(){ 
+
+    function logout(){
       document.getElementById('appBox').classList.add('hidden'); 
       document.getElementById('loginBox').classList.remove('hidden'); 
     }
-    function showApp(){ 
+
+    function showApp(){
       document.getElementById('loginBox').classList.add('hidden'); 
       document.getElementById('appBox').classList.remove('hidden'); 
-      renderFolders(); 
+      renderFolders();
     }
 
-    let data = JSON.parse(localStorage.getItem("filevault_data")||"{}");
     function save(){ localStorage.setItem("filevault_data", JSON.stringify(data)); }
 
     function createFolder(){
       let name = document.getElementById('folderName').value.trim();
-      if(!name) return;
+      if(!name) return alert("ফোল্ডারের নাম লিখুন");
       if(!data[name]) data[name] = [];
       save();
       renderFolders();
@@ -73,12 +82,14 @@
       Object.keys(data).forEach(folder=>{
         let div = document.createElement('div');
         div.className="folder";
-        div.innerHTML = `<b>${folder}</b>`;
-        
+        let title = document.createElement('b');
+        title.textContent = folder;
+        div.appendChild(title);
+
         let input = document.createElement('input');
         input.type = "file";
         input.multiple = true;
-        input.addEventListener("change", (e)=>uploadFiles(folder, e.target.files));
+        input.onchange = (e)=>uploadFiles(folder, e.target.files);
         div.appendChild(input);
 
         let list = document.createElement('div');
@@ -86,12 +97,13 @@
         data[folder].forEach((f,i)=>{
           let item = document.createElement('div');
           item.className="file-item";
-          item.innerHTML = `<span>${f.name}</span>
-            <div>
-              <button onclick="previewFile('${folder}',${i})">Preview</button>
-              <button onclick="downloadFile('${folder}',${i})">Download</button>
-              <button onclick="deleteFile('${folder}',${i})">Delete</button>
-            </div>`;
+          item.innerHTML = `<span>${f.name}</span>`;
+          let actions = document.createElement('div');
+          actions.innerHTML = `
+            <button onclick="previewFile('${folder}',${i})">Preview</button>
+            <button onclick="downloadFile('${folder}',${i})">Download</button>
+            <button onclick="deleteFile('${folder}',${i})">Delete</button>`;
+          item.appendChild(actions);
           list.appendChild(item);
         });
         div.appendChild(list);
