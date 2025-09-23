@@ -118,10 +118,7 @@ async function setPassword(plain){ const salt=randSalt(); const h=await sha256he
 async function verifyPassword(plain){ const salt=getStorage().getItem('office_pwd_salt')||''; const h=await sha256hex(salt+'|'+plain); return h===getStorage().getItem('office_pwd_hash');}
 async function ensureDefaultPassword(){ 
   if(!hasPasswordSet()){ 
-    const salt=randSalt(); 
-    const h=await sha256hex(salt+'|'+DEFAULT_PASSWORD); 
-    getStorage().setItem('office_pwd_hash',h); 
-    getStorage().setItem('office_pwd_salt',salt);
+    await setPassword(DEFAULT_PASSWORD); 
   } 
 }
 function clearAuthOverlay(){ getStorage().setItem('office_logged_in','1'); document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; initApp(); }
@@ -166,7 +163,7 @@ async function addFileToFolder(file,folderId){return new Promise((resolve,reject
   const reader=new FileReader(); reader.onload=ev=>{
     const obj={id:id(), type:'file', name:file.name, mime:file.type, size:file.size, folder:folderId, created:Date.now(), data:ev.target.result};
     const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).add(obj); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);
-  }; reader.readAsArrayBuffer(file);
+  }; reader.readAsDataURL(file);
 });}
 async function getFilesForFolder(folderId){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'); const index=tx.objectStore(DB_STORE).index('folder'); const req=index.getAll(folderId); req.onsuccess=e=>resolve(e.target.result); req.onerror=e=>reject(e.target.error);});}
 async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).delete(idToDelete); tx.oncomplete=()=>resolve();});}
@@ -174,14 +171,12 @@ function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=byte
 
 // ===== Preview =====
 function previewFile(file){
-  const blob=new Blob([file.data],{type:file.mime});
-  const url=URL.createObjectURL(blob);
   const area=document.getElementById('previewArea'); area.innerHTML='';
   if(file.mime==='application/pdf'){
     const iframe=document.createElement('iframe');
-    iframe.src=url; iframe.width='100%'; iframe.height='480px'; iframe.style.border='1px solid #ccc'; area.appendChild(iframe);
+    iframe.src=file.data; iframe.width='100%'; iframe.height='480px'; iframe.style.border='1px solid #ccc'; area.appendChild(iframe);
   } else if(file.mime.startsWith('video/')){
-    const vid=document.createElement('video'); vid.controls=true; vid.src=url; vid.style.width='100%'; area.appendChild(vid);
+    const vid=document.createElement('video'); vid.controls=true; vid.src=file.data; vid.style.width='100%'; area.appendChild(vid);
   } else { area.textContent='প্রিভিউ নেই'; }
 }
 
