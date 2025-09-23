@@ -116,7 +116,14 @@ function hasPasswordSet(){ return !!getStorage().getItem('office_pwd_hash'); }
 function randSalt(){ return Math.random().toString(36).slice(2,10); }
 async function setPassword(plain){ const salt=randSalt(); const h=await sha256hex(salt+'|'+plain); getStorage().setItem('office_pwd_hash',h); getStorage().setItem('office_pwd_salt',salt);}
 async function verifyPassword(plain){ const salt=getStorage().getItem('office_pwd_salt')||''; const h=await sha256hex(salt+'|'+plain); return h===getStorage().getItem('office_pwd_hash');}
-async function ensureDefaultPassword(){ if(!hasPasswordSet()){ await setPassword(DEFAULT_PASSWORD); } }
+async function ensureDefaultPassword(){ 
+  if(!hasPasswordSet()){ 
+    const salt=randSalt(); 
+    const h=await sha256hex(salt+'|'+DEFAULT_PASSWORD); 
+    getStorage().setItem('office_pwd_hash',h); 
+    getStorage().setItem('office_pwd_salt',salt);
+  } 
+}
 function clearAuthOverlay(){ getStorage().setItem('office_logged_in','1'); document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; initApp(); }
 function showSetup(){ document.getElementById('loginArea').style.display='none'; document.getElementById('setupArea').style.display='block'; document.getElementById('authTitle').textContent='পাসওয়ার্ড সেট করুন'; }
 function showLogin(){ document.getElementById('loginArea').style.display='block'; document.getElementById('setupArea').style.display='none'; document.getElementById('authTitle').textContent='লগইন'; }
@@ -157,7 +164,7 @@ const req=store.openCursor(); req.onsuccess=e=>{const cur=e.target.result;if(cur
 req.onerror=e=>reject(e.target.error);});}
 async function addFileToFolder(file,folderId){return new Promise((resolve,reject)=>{
   const reader=new FileReader(); reader.onload=ev=>{
-    const obj={id:id(), type:'file', name:file.name, mime:file.type, size:file.size, folder:folderId, created:Date.now(), data:new Uint8Array(ev.target.result)};
+    const obj={id:id(), type:'file', name:file.name, mime:file.type, size:file.size, folder:folderId, created:Date.now(), data:Array.from(new Uint8Array(ev.target.result))};
     const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).add(obj); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);
   }; reader.readAsArrayBuffer(file);
 });}
@@ -167,7 +174,8 @@ function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=byte
 
 // ===== Preview =====
 function previewFile(file){
-  const blob=new Blob([file.data.buffer],{type:file.mime});
+  const uint8 = new Uint8Array(file.data);
+  const blob=new Blob([uint8],{type:file.mime});
   const url=URL.createObjectURL(blob);
   const area=document.getElementById('previewArea'); area.innerHTML='';
   if(file.mime==='application/pdf'){
