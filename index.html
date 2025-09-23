@@ -54,6 +54,7 @@ iframe, video{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:non
     </div>
 
     <div class="folders" id="foldersList"></div>
+
     <hr style="margin:14px 0" />
 
     <div class="flex">
@@ -69,104 +70,95 @@ iframe, video{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:non
     </div>
 
     <div class="files" id="filesList"></div>
+
     <div style="margin-top:12px;position:relative" id="previewWrap">
       <div id="previewArea"></div>
       <div class="watermark" id="wmText">Confidential</div>
     </div>
   </div>
-  <footer><small>নোট: এই অ্যাপ ব্রাউজারের IndexedDB-এ ডেটা রাখে।</small></footer>
+
+  <footer>
+    <small>নোট: এই অ্যাপ ব্রাউজারের IndexedDB-এ ডেটা রাখে।</small>
+  </footer>
 </div>
 
-<!-- Overlay -->
 <div id="overlay" class="overlay">
-<div class="auth-box" id="authBox">
-<h3 id="authTitle">লগইন</h3>
-<div id="loginArea">
-<p>পাসওয়ার্ড দিন</p>
-<input id="inPass" type="password" placeholder="পাসওয়ার্ড" />
-<div style="display:flex;gap:8px;margin-top:12px">
-<button id="doLogin">লগইন</button>
-</div>
-<small class="hint">ডিফল্ট পাসওয়ার্ড: <b>Ajhar123</b></small>
-</div>
-</div>
+  <div class="auth-box" id="authBox">
+    <h3 id="authTitle">লগইন</h3>
+    <p>পাসওয়ার্ড দিন</p>
+    <input id="inPass" type="password" placeholder="পাসওয়ার্ড" />
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="doLogin">লগইন</button>
+    </div>
+  </div>
 </div>
 
 <script>
 // ===== Auth =====
 const DEFAULT_PASSWORD = "Ajhar123";
 function getStorage(){ return window.localStorage; }
-function hasPasswordSet(){ return !!getStorage().getItem('office_pwd'); }
-function setPassword(p){ getStorage().setItem('office_pwd',p); }
-function verifyPassword(p){ return p === getStorage().getItem('office_pwd'); }
-function clearAuthOverlay(){ getStorage().setItem('office_logged_in','1'); document.getElementById('overlay').style.display='none'; document.getElementById('app').style.display='block'; initApp(); }
 
-document.addEventListener('DOMContentLoaded', ()=>{
-  if(!hasPasswordSet()){ setPassword(DEFAULT_PASSWORD); }
-  if(getStorage().getItem('office_logged_in')==='1'){ clearAuthOverlay(); }
+function isLoggedIn(){ return getStorage().getItem("office_logged_in")==="1"; }
+function loginSuccess(){ getStorage().setItem("office_logged_in","1"); document.getElementById("overlay").style.display="none"; document.getElementById("app").style.display="block"; initApp(); }
+
+document.getElementById("doLogin").addEventListener("click",()=>{
+  const p=document.getElementById("inPass").value;
+  if(p===DEFAULT_PASSWORD){ loginSuccess(); }
+  else alert("পাসওয়ার্ড ভুল।");
 });
 
-document.getElementById('doLogin').addEventListener('click', ()=>{
-  const p=document.getElementById('inPass').value;
-  if(verifyPassword(p)){ clearAuthOverlay(); }
-  else{ alert('পাসওয়ার্ড ভুল।'); }
-});
+if(isLoggedIn()){ loginSuccess(); }
 
 // ===== IndexedDB =====
-const DB_NAME='office-files-db'; const DB_STORE='files'; let db; let currentFolder=null;
+const DB_NAME="office-files-db"; const DB_STORE="files"; let db; let currentFolder=null;
+
 function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);
-req.onupgradeneeded=e=>{const idb=e.target.result; if(!idb.objectStoreNames.contains(DB_STORE)){const store=idb.createObjectStore(DB_STORE,{keyPath:'id'}); store.createIndex('folder','folder',{unique:false});}};
-req.onsuccess=e=>{db=e.target.result;resolve(db);}; req.onerror=e=>reject(e.target.error);})}
-function id(){return 'f_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);}
-async function createFolder(name){const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).add({id:id(), type:'folder', name, created:Date.now()}); return tx.complete||new Promise(r=>tx.oncomplete=r);}
-async function getFolders(){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE); const items=[]; const req=store.openCursor();
-req.onsuccess=e=>{const cur=e.target.result;if(cur){if(cur.value.type==='folder') items.push(cur.value);cur.continue();} else resolve(items.sort((a,b)=>a.created-b.created));};
-req.onerror=e=>reject(e.target.error);});}
-async function addFileToFolder(file,folderId){return new Promise((resolve,reject)=>{
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const obj={id:id(), type:'file', name:file.name, mime:file.type, size:file.size, folder:folderId, created:Date.now(), data:new Uint8Array(ev.target.result)};
-    const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).add(obj); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);
-  }; reader.readAsArrayBuffer(file);
-});}
-async function getFilesForFolder(folderId){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readonly'); const index=tx.objectStore(DB_STORE).index('folder'); const req=index.getAll(folderId);
-req.onsuccess=e=>resolve(e.target.result.sort((a,b)=>b.created-a.created)); req.onerror=e=>reject(e.target.error);});}
-async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).delete(idToDelete); tx.oncomplete=()=>resolve(); tx.onerror=e=>reject(e.target.error);});}
-function readableSize(bytes){if(bytes<1024) return bytes+' bytes'; const kb=bytes/1024; if(kb<1024) return kb.toFixed(1)+' KB'; const mb=kb/1024; if(mb<1024) return mb.toFixed(1)+' MB'; return (mb/1024).toFixed(2)+' GB';}
+req.onupgradeneeded=e=>{const idb=e.target.result; if(!idb.objectStoreNames.contains(DB_STORE)){const store=idb.createObjectStore(DB_STORE,{keyPath:"id"}); store.createIndex("folder","folder",{unique:false});}};
+req.onsuccess=e=>{db=e.target.result;resolve(db);}; req.onerror=e=>reject(e.target.error);});}
+
+function id(){return "f_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);}
+async function createFolder(name){const tx=db.transaction(DB_STORE,"readwrite"); const store=tx.objectStore(DB_STORE); store.add({id:id(),type:"folder",name,created:Date.now()}); return tx.complete||new Promise(res=>tx.oncomplete=res);}
+async function getFolders(){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readonly"); const store=tx.objectStore(DB_STORE); const items=[]; const req=store.openCursor(); req.onsuccess=e=>{const cur=e.target.result;if(cur){if(cur.value.type==="folder") items.push(cur.value);cur.continue();} else resolve(items.sort((a,b)=>a.created-b.created));}; req.onerror=e=>reject(e.target.error);});}
+async function addFileToFolder(file,folderId){return new Promise((resolve,reject)=>{const reader=new FileReader(); reader.onload=ev=>{const buffer=ev.target.result; const obj={id:id(),type:"file",name:file.name,mime:file.type,size:file.size,folder:folderId,created:Date.now(),data:new Uint8Array(buffer)}; const tx=db.transaction(DB_STORE,"readwrite"); tx.objectStore(DB_STORE).add(obj); tx.oncomplete=()=>resolve();}; reader.onerror=e=>reject(e); reader.readAsArrayBuffer(file);});}
+async function getFilesForFolder(folderId){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readonly"); const store=tx.objectStore(DB_STORE).index("folder"); const req=store.getAll(folderId); req.onsuccess=e=>resolve(e.target.result.sort((a,b)=>b.created-a.created)); req.onerror=e=>reject(e.target.error);});}
+async function deleteItem(idToDelete){return new Promise((resolve,reject)=>{const tx=db.transaction(DB_STORE,"readwrite"); tx.objectStore(DB_STORE).delete(idToDelete); tx.oncomplete=()=>resolve();});}
+function readableSize(bytes){if(bytes<1024)return bytes+" bytes";const kb=bytes/1024;if(kb<1024)return kb.toFixed(1)+" KB";const mb=kb/1024;if(mb<1024)return mb.toFixed(1)+" MB";return(mb/1024).toFixed(2)+" GB";}
 
 // ===== Preview =====
 function previewFile(file){
-  const blob=new Blob([file.data.buffer],{type:file.mime});
+  const blob=new Blob([file.data],{type:file.mime});
   const url=URL.createObjectURL(blob);
-  const area=document.getElementById('previewArea'); area.innerHTML='';
-  document.getElementById('wmText').textContent=`Confidential • ${new Date().toLocaleDateString()}`;
-  if(file.mime==='application/pdf'){
-    const iframe=document.createElement('iframe');
-    iframe.src=url; iframe.width='100%'; iframe.height='360px'; area.appendChild(iframe);
-  } else if(file.mime.startsWith('video/')){
-    const vid=document.createElement('video'); vid.className='preview'; vid.controls=true; vid.src=url; area.appendChild(vid);
-  } else { area.textContent='প্রিভিউ নেই'; }
+  const area=document.getElementById("previewArea"); area.innerHTML="";
+  document.getElementById("wmText").textContent="Confidential • "+new Date().toLocaleDateString();
+
+  if(file.mime==="application/pdf"){
+    const iframe=document.createElement("iframe");
+    iframe.src=url;
+    iframe.width="100%";
+    iframe.height="500px";
+    area.appendChild(iframe);
+  } else if(file.mime.startsWith("video/")){
+    const vid=document.createElement("video");
+    vid.className="preview"; vid.controls=true; vid.src=url; area.appendChild(vid);
+  } else { area.textContent="প্রিভিউ নেই"; }
 }
 
 // ===== UI Update =====
 async function updateUI(){
-  const folders=await getFolders(); const foldersList=document.getElementById('foldersList'); const targetSelect=document.getElementById('targetFolderSelect');
-  foldersList.innerHTML=''; targetSelect.innerHTML='';
-  const def=document.createElement('option'); def.value=''; def.text='--- নির্বাচন করুন ---'; targetSelect.appendChild(def);
-  folders.forEach(f=>{const div=document.createElement('div'); div.className='folder'; div.textContent=f.name; div.onclick=()=>{currentFolder=f.id; updateFiles(); Array.from(foldersList.children).forEach(c=>c.classList.remove('active')); div.classList.add('active');}; foldersList.appendChild(div);
-  const opt=document.createElement('option'); opt.value=f.id; opt.text=f.name; targetSelect.appendChild(opt);});
+  const folders=await getFolders(); const list=document.getElementById("foldersList"); const sel=document.getElementById("targetFolderSelect");
+  list.innerHTML=""; sel.innerHTML="";
+  const def=document.createElement("option"); def.value=""; def.text="--- নির্বাচন করুন ---"; sel.appendChild(def);
+  folders.forEach(f=>{const div=document.createElement("div"); div.className="folder"; div.textContent=f.name; div.onclick=()=>{currentFolder=f.id;Array.from(list.children).forEach(ch=>ch.classList.remove("active")); div.classList.add("active"); updateFiles();}; list.appendChild(div); const opt=document.createElement("option"); opt.value=f.id; opt.text=f.name; sel.appendChild(opt);});
 }
-async function updateFiles(){if(!currentFolder){document.getElementById('filesList').innerHTML=''; return;}
-const files=await getFilesForFolder(currentFolder); const filesList=document.getElementById('filesList'); filesList.innerHTML='';
-files.forEach(f=>{const div=document.createElement('div'); div.className='file'; const meta=document.createElement('div'); meta.className='meta'; meta.textContent=f.name+' ('+readableSize(f.size)+')'; div.appendChild(meta);
-const actions=document.createElement('div'); const pbtn=document.createElement('button'); pbtn.textContent='প্রিভিউ'; pbtn.onclick=()=>previewFile(f); actions.appendChild(pbtn);
-const rbtn=document.createElement('button'); rbtn.textContent='মুছুন'; rbtn.onclick=async()=>{await deleteItem(f.id);updateFiles();}; actions.appendChild(rbtn); div.appendChild(actions); filesList.appendChild(div);});
-}
+
+async function updateFiles(){if(!currentFolder){document.getElementById("filesList").innerHTML="";return;} const files=await getFilesForFolder(currentFolder); const list=document.getElementById("filesList"); list.innerHTML=""; files.forEach(f=>{const div=document.createElement("div"); div.className="file"; const meta=document.createElement("div"); meta.className="meta"; meta.textContent=f.name+" ("+readableSize(f.size)+")"; div.appendChild(meta); const actions=document.createElement("div"); const pbtn=document.createElement("button"); pbtn.textContent="প্রিভিউ"; pbtn.onclick=()=>previewFile(f); actions.appendChild(pbtn); const rbtn=document.createElement("button"); rbtn.textContent="মুছুন"; rbtn.onclick=async()=>{if(confirm("মুছতে চান?")){await deleteItem(f.id);updateFiles();}}; actions.appendChild(rbtn); div.appendChild(actions); list.appendChild(div);});}
 
 // ===== Init =====
 async function initApp(){await openDB(); await updateUI();}
-document.getElementById('createFolderBtn').addEventListener('click',async()=>{const n=document.getElementById('newFolderName').value.trim();if(!n)return;await createFolder(n);document.getElementById('newFolderName').value='';updateUI();});
-document.getElementById('uploadBtn').addEventListener('click',async()=>{const inp=document.getElementById('fileInput');const fldr=document.getElementById('targetFolderSelect').value;if(!inp.files.length||!fldr){alert('ফাইল ও ফোল্ডার নির্বাচন করুন');return;}for(const f of inp.files){await addFileToFolder(f,fldr);}inp.value='';updateFiles();});
+
+// ===== Event Listeners =====
+document.getElementById("createFolderBtn").addEventListener("click",async()=>{const n=document.getElementById("newFolderName").value.trim(); if(!n){alert("ফোল্ডার নাম দিন");return;} await createFolder(n); document.getElementById("newFolderName").value=""; updateUI();});
+document.getElementById("uploadBtn").addEventListener("click",async()=>{const inp=document.getElementById("fileInput"); if(!inp.files.length){alert("ফাইল নির্বাচন করুন");return;} const fId=document.getElementById("targetFolderSelect").value; if(!fId){alert("ফোল্ডার নির্বাচন করুন");return;} for(const f of inp.files){await addFileToFolder(f,fId);} inp.value=""; updateFiles();});
 </script>
 </body>
 </html>
