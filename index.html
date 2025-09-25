@@ -1,196 +1,255 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="bn">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>File Vault (Final Fixed)</title>
+  <title>ফাইল আপলোড ও ভিউয়ার — SebaKendra Uploader</title>
   <style>
-    body{font-family:sans-serif;background:#f5f7fb;margin:0;padding:0}
-    .wrap{max-width:900px;margin:20px auto;padding:15px}
-    .card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-bottom:15px}
-    h1{margin:0 0 10px;font-size:20px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    input,button{padding:8px;border-radius:6px;border:1px solid #ccc}
-    button{background:#0b74de;color:#fff;border:none;cursor:pointer}
-    .folder{margin-top:12px;padding:10px;border:1px solid #eee;border-radius:8px;background:#fafafa}
-    .file-item{display:flex;justify-content:space-between;align-items:center;padding:6px;margin:5px 0;background:#fff;border:1px solid #eee;border-radius:6px}
-    iframe,video,img,embed{width:100%;height:60vh;border:1px solid #ccc;border-radius:8px;background:#000}
-    .small{font-size:13px;padding:5px 8px}
-    .danger{background:#d9534f}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans',"Helvetica Neue",Arial;line-height:1.4;margin:0;padding:16px;background:#f7fafc;color:#0f172a}
+    .wrap{max-width:980px;margin:0 auto}
+    header{display:flex;gap:12px;align-items:center}
+    h1{font-size:20px;margin:0}
+    .uploader{background:#fff;border-radius:10px;padding:14px;margin-top:14px;box-shadow:0 6px 18px rgba(2,6,23,.06)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input[type=text]{padding:8px;border:1px solid #d1d5db;border-radius:6px}
+    .drop{margin-top:10px;border:2px dashed #cbd5e1;padding:18px;border-radius:8px;text-align:center;color:#475569}
+    .files{margin-top:14px}
+    .file-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:#fff;margin-bottom:8px}
+    .meta{display:flex;gap:12px;align-items:center}
+    button{background:#0ea5a4;color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+    button.ghost{background:#eef2ff;color:#3730a3}
+    .viewer{margin-top:18px;background:#fff;padding:12px;border-radius:8px;min-height:320px}
+    .hidden{display:none}
+    select{padding:8px;border:1px solid #d1d5db;border-radius:6px}
+    small{color:#475569}
+    .tag{background:#eef2ff;color:#3730a3;padding:4px 8px;border-radius:999px;font-size:12px}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" id="loginCard">
-      <h1>🔐 File Vault — লগইন</h1>
-      <div class="row">
-        <input id="pw" type="password" placeholder="পাসওয়ার্ড দিন" />
-        <button id="btnLogin">লগইন</button>
-      </div>
+<div class="wrap">
+  <header>
+    <h1>ফাইল আপলোড ও ভিউয়ার</h1>
+    <div style="margin-left:auto"><small>Local Browser storage (IndexedDB)</small></div>
+  </header>
+
+  <div class="uploader">
+    <div class="row">
+      <label>ফোল্ডারের নাম: <input id="folderName" type="text" placeholder="উদাহরণ: pdfs, videos" /></label>
+      <label>ফাইল টাইপ দেখান: 
+        <select id="filterType">
+          <option value="all">সব</option>
+          <option value="pdf">PDF</option>
+          <option value="video">Video</option>
+          <option value="image">Image</option>
+        </select>
+      </label>
+      <button id="clearDb" class="ghost">সফট ওয়্যার: ইন্ডেক্সডিবি খালি করুন</button>
     </div>
 
-    <div class="card" id="appCard" style="display:none">
-      <h1>📁 File Vault</h1>
-      <div class="row">
-        <input id="newFolder" type="text" placeholder="নতুন ফোল্ডারের নাম" />
-        <button id="btnCreate">তৈরি</button>
-        <button id="btnLogout" class="small">লগআউট</button>
-      </div>
-      <div id="folders"></div>
-      <h3>Preview</h3>
-      <div id="preview"></div>
+    <div style="margin-top:10px">
+      <input id="fileInput" type="file" multiple />
+      <button id="addFiles">আপলোড করুন</button>
+    </div>
+
+    <div id="drop" class="drop">ফাইল এখানে টেনে আনুন অথবা উপরের বাটনে বাছুন</div>
+    <div class="files">
+      <h3>সংরক্ষিত ফাইলসমূহ</h3>
+      <div id="fileList"></div>
+    </div>
+
+    <div class="viewer hidden" id="viewer">
+      <div id="viewerTitle"></div>
+      <div id="viewerArea" style="margin-top:8px"></div>
     </div>
   </div>
 
+  <p style="margin-top:12px"><small>নোট: এই পেজটি ব্রাউজারের IndexedDB-এ ফাইল সংরক্ষণ করে — তাই আপনি যে ব্রাউজারে আপলোড করবেন সেখানে ফাইলগুলো দেখা যাবে। যদি আপনি এই পেজটি GitHub Pages-এ হোস্ট করেন, GitHub সার্ভার নিজে থেকে আপনার ব্রাউজারের ফাইলগুলো ধরে রাখবে না। সার্ভারে সরাসরি ফাইল রাখতে চাইলে Firebase বা কোনও সার্ভার প্রয়োজন হবে — আমি সাহায্য করতে পারি।</small></p>
+</div>
+
 <script>
-const DB_NAME="vaultDB";const STORE="files";let db=null;
+// Simple IndexedDB wrapper
+const DB_NAME = 'sebakendra_files_v1';
+const STORE = 'files';
+let db;
 
-function openDb(){
+function openDB(){
   return new Promise((res,rej)=>{
-    const r=indexedDB.open(DB_NAME,1);
-    r.onupgradeneeded=e=>{
-      let idb=e.target.result;
-      if(!idb.objectStoreNames.contains(STORE)){
-        idb.createObjectStore(STORE,{keyPath:"id",autoIncrement:true});
+    const r = indexedDB.open(DB_NAME,1);
+    r.onupgradeneeded = e => {
+      db = e.target.result;
+      if(!db.objectStoreNames.contains(STORE)){
+        const s = db.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
+        s.createIndex('folder','folder',{unique:false});
+        s.createIndex('type','type',{unique:false});
+        s.createIndex('name','name',{unique:false});
       }
-    };
-    r.onsuccess=e=>{db=e.target.result;res(db);};
-    r.onerror=e=>rej(e);
-  });
+    }
+    r.onsuccess = e=>{db=e.target.result;res(db)};
+    r.onerror = e=>rej(e);
+  })
 }
 
-function addFile(folder,file){
+async function addFile(file,folder){
+  const tx = db.transaction(STORE,'readwrite');
+  const store = tx.objectStore(STORE);
+  const record = {name:file.name,type:file.type,size:file.size,folder:folder||'',time:Date.now(),file: file};
   return new Promise((res,rej)=>{
-    let tx=db.transaction(STORE,"readwrite");
-    let st=tx.objectStore(STORE);
-    let rec={folder,name:file.name,type:file.type,size:file.size,created:Date.now(),blob:file};
-    let rq=st.add(rec);
-    rq.onsuccess=()=>res(true);
-    rq.onerror=e=>rej(e);
-  });
+    const req = store.add(record);
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = e=>rej(e);
+  })
 }
 
-function getFiles(folder){
+async function listFiles(){
+  const tx = db.transaction(STORE,'readonly');
+  const store = tx.objectStore(STORE);
   return new Promise((res,rej)=>{
-    let tx=db.transaction(STORE,"readonly");
-    let st=tx.objectStore(STORE);
-    let rq=st.getAll();
-    rq.onsuccess=()=>res(rq.result.filter(r=>r.folder===folder));
-    rq.onerror=e=>rej(e);
-  });
+    const arr=[];
+    const cur = store.openCursor();
+    cur.onsuccess = e=>{
+      const c = e.target.result;
+      if(c){arr.push(c.value); c.continue();} else res(arr);
+    }
+    cur.onerror = e=>rej(e);
+  })
 }
 
-function deleteFile(id){
+async function getFile(id){
+  const tx = db.transaction(STORE,'readonly');
+  const store = tx.objectStore(STORE);
   return new Promise((res,rej)=>{
-    let tx=db.transaction(STORE,"readwrite");
-    let st=tx.objectStore(STORE);
-    let rq=st.delete(id);
-    rq.onsuccess=()=>res(true);
-    rq.onerror=e=>rej(e);
+    const req = store.get(Number(id));
+    req.onsuccess = ()=>res(req.result);
+    req.onerror = e=>rej(e);
+  })
+}
+
+async function deleteFile(id){
+  const tx = db.transaction(STORE,'readwrite');
+  const store = tx.objectStore(STORE);
+  return new Promise((res,rej)=>{
+    const req = store.delete(Number(id));
+    req.onsuccess = ()=>res();
+    req.onerror = e=>rej(e);
+  })
+}
+
+async function clearDB(){
+  const tx = db.transaction(STORE,'readwrite');
+  const store = tx.objectStore(STORE);
+  return new Promise((res,rej)=>{
+    const req = store.clear();
+    req.onsuccess = ()=>res();
+    req.onerror = e=>rej(e);
+  })
+}
+
+// UI
+const fileInput = document.getElementById('fileInput');
+const addBtn = document.getElementById('addFiles');
+const fileList = document.getElementById('fileList');
+const drop = document.getElementById('drop');
+const folderName = document.getElementById('folderName');
+const filterType = document.getElementById('filterType');
+const viewer = document.getElementById('viewer');
+const viewerArea = document.getElementById('viewerArea');
+const viewerTitle = document.getElementById('viewerTitle');
+const clearDbBtn = document.getElementById('clearDb');
+
+async function refresh(){
+  const all = await listFiles();
+  const filter = filterType.value;
+  fileList.innerHTML='';
+  const files = all.filter(f=>{
+    if(filter==='all') return true;
+    if(filter==='pdf') return f.type==='application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+    if(filter==='image') return f.type.startsWith('image/') || /(jpg|jpeg|png|gif|webp)$/i.test(f.name);
+    if(filter==='video') return f.type.startsWith('video/') || /(mp4|webm|ogg|mov)$/i.test(f.name);
+    return true;
   });
-}
-
-// ---------- UI ----------
-const loginCard=document.getElementById("loginCard");
-const appCard=document.getElementById("appCard");
-const btnLogin=document.getElementById("btnLogin");
-const btnLogout=document.getElementById("btnLogout");
-const pwInput=document.getElementById("pw");
-const newFolder=document.getElementById("newFolder");
-const btnCreate=document.getElementById("btnCreate");
-const foldersDiv=document.getElementById("folders");
-const preview=document.getElementById("preview");
-
-btnLogin.onclick=()=>{
-  let p=pwInput.value.trim();
-  let saved=localStorage.getItem("vault_pass");
-  if(!saved){
-    localStorage.setItem("vault_pass",p);
-    startApp();
-  }else{
-    if(p===saved) startApp();
-    else alert("ভুল পাসওয়ার্ড");
-  }
-};
-
-btnLogout.onclick=()=>{
-  appCard.style.display="none";loginCard.style.display="block";pwInput.value="";
-};
-
-async function startApp(){
-  await openDb();
-  loginCard.style.display="none";appCard.style.display="block";
-  renderUI();
-}
-
-btnCreate.onclick=()=>{
-  let f=newFolder.value.trim();
-  if(!f)return;
-  renderUI();newFolder.value="";
-};
-
-async function renderUI(){
-  foldersDiv.innerHTML="";
-  // collect all folders
-  let tx=db.transaction(STORE,"readonly");
-  let st=tx.objectStore(STORE);
-  let rq=st.getAll();
-  rq.onsuccess=()=>{
-    let all=rq.result;
-    let folders=[...new Set(all.map(r=>r.folder))];
-    if(newFolder.value) folders.push(newFolder.value);
-    folders=[...new Set(folders)];
-    if(folders.length===0){foldersDiv.innerHTML="<i>কোনো ফোল্ডার নেই</i>";return;}
-    folders.forEach(name=>{
-      let box=document.createElement("div");box.className="folder";
-      box.innerHTML=`<b>${name}</b><br>`;
-      let input=document.createElement("input");
-      input.type="file";input.multiple=true;
-      input.onchange=async e=>{
-        for(let f of e.target.files){await addFile(name,f);}
-        renderUI();
-      };
-      box.appendChild(input);
-
-      getFiles(name).then(files=>{
-        files.forEach(rec=>{
-          let div=document.createElement("div");div.className="file-item";
-          div.innerHTML=`${rec.name} (${(rec.size/1024/1024).toFixed(1)} MB)`;
-          let actions=document.createElement("div");
-          let pBtn=document.createElement("button");pBtn.textContent="Preview";pBtn.className="small";
-          pBtn.onclick=()=>showPreview(rec);
-          let dBtn=document.createElement("button");dBtn.textContent="Delete";dBtn.className="small danger";
-          dBtn.onclick=async()=>{await deleteFile(rec.id);renderUI();preview.innerHTML="";};
-          actions.appendChild(pBtn);actions.appendChild(dBtn);
-          div.appendChild(actions);box.appendChild(div);
-        });
-      });
-
-      foldersDiv.appendChild(box);
-    });
-  };
-}
-
-function showPreview(rec){
-  preview.innerHTML="";
-  let url=URL.createObjectURL(rec.blob);
-  if(rec.type==="application/pdf"||rec.name.endsWith(".pdf")){
-    let emb=document.createElement("embed");emb.src=url;emb.type="application/pdf";
-    preview.appendChild(emb);
-    let link=document.createElement("div");
-    link.innerHTML=`<a href="${url}" target="_blank">Open PDF in new tab</a>`;
-    preview.appendChild(link);
-  }else if(rec.type.startsWith("video")){
-    let v=document.createElement("video");v.controls=true;v.src=url;preview.appendChild(v);
-  }else if(rec.type.startsWith("image")){
-    let i=document.createElement("img");i.src=url;preview.appendChild(i);
-  }else{
-    let f=document.createElement("iframe");f.src=url;preview.appendChild(f);
-    let link=document.createElement("div");
-    link.innerHTML=`<a href="${url}" download="${rec.name}">Download ${rec.name}</a>`;
-    preview.appendChild(link);
+  files.sort((a,b)=>b.time-a.time);
+  if(files.length===0){fileList.innerHTML='<small>কোনো ফাইল নেই</small>';return}
+  for(const f of files){
+    const el = document.createElement('div'); el.className='file-item';
+    const left = document.createElement('div'); left.className='meta';
+    left.innerHTML = `<div><strong>${escapeHtml(f.name)}</strong><div><small>${readableSize(f.size)} • ${escapeHtml(f.folder||'নো ফোল্ডার')}</small></div></div>`;
+    const right = document.createElement('div');
+    const openBtn = document.createElement('button'); openBtn.textContent='Open';
+    openBtn.onclick = ()=>openFile(f.id);
+    const dl = document.createElement('button'); dl.textContent='Download'; dl.style.marginLeft='8px'; dl.onclick = ()=>downloadFile(f.id);
+    const del = document.createElement('button'); del.textContent='Delete'; del.className='ghost'; del.style.marginLeft='8px'; del.onclick=async()=>{if(confirm('মুছতে চান?')){await deleteFile(f.id);refresh();}}
+    right.appendChild(openBtn); right.appendChild(dl); right.appendChild(del);
+    el.appendChild(left); el.appendChild(right); fileList.appendChild(el);
   }
 }
+
+function readableSize(n){if(n<1024) return n+' B'; if(n<1024*1024) return (n/1024).toFixed(1)+' KB'; if(n<1024*1024*1024) return (n/1024/1024).toFixed(1)+' MB'; return (n/1024/1024/1024).toFixed(2)+' GB';}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));}
+
+async function openFile(id){
+  const rec = await getFile(id);
+  if(!rec) return alert('ফাইল পাওয়া যায়নি');
+  viewer.classList.remove('hidden');
+  viewerTitle.innerHTML = `<strong>${escapeHtml(rec.name)}</strong> <span class="tag">${readableSize(rec.size)}</span>`;
+  viewerArea.innerHTML='';
+  const blob = rec.file instanceof Blob ? rec.file : new Blob([rec.file],{type:rec.type});
+  const url = URL.createObjectURL(blob);
+
+  if(rec.type==='application/pdf' || rec.name.toLowerCase().endsWith('.pdf')){
+    // embed PDF
+    const iframe = document.createElement('iframe'); iframe.src = url; iframe.style.width='100%'; iframe.style.height='600px'; iframe.setAttribute('title',rec.name);
+    viewerArea.appendChild(iframe);
+  } else if(rec.type.startsWith('image/') || /(jpg|jpeg|png|gif|webp)$/i.test(rec.name)){
+    const img = document.createElement('img'); img.src = url; img.style.maxWidth='100%'; img.style.maxHeight='700px'; viewerArea.appendChild(img);
+  } else if(rec.type.startsWith('video/') || /(mp4|webm|ogg|mov)$/i.test(rec.name)){
+    const vid = document.createElement('video'); vid.controls = true; vid.src = url; vid.style.maxWidth='100%'; vid.style.maxHeight='700px'; viewerArea.appendChild(vid);
+  } else {
+    // try to display as text
+    const a = document.createElement('a'); a.href = url; a.textContent = 'Open file'; a.target='_blank'; viewerArea.appendChild(a);
+  }
+}
+
+async function downloadFile(id){
+  const rec = await getFile(id);
+  if(!rec) return alert('ফাইল পাওয়া যায়নি');
+  const blob = rec.file instanceof Blob ? rec.file : new Blob([rec.file],{type:rec.type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = rec.name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+// wire up upload
+addBtn.addEventListener('click',async()=>{
+  const files = fileInput.files; if(!files || files.length===0) return alert('কোনো ফাইল নির্বাচন করা হয়নি');
+  const folder = folderName.value.trim();
+  for(const f of files){ await addFile(f,folder); }
+  fileInput.value=''; folderName.value=''; refresh();
+});
+
+// drag and drop
+['dragenter','dragover'].forEach(ev=>{
+  drop.addEventListener(ev,e=>{e.preventDefault();drop.style.background='#eef2ff';});
+});
+['dragleave','drop'].forEach(ev=>{
+  drop.addEventListener(ev,e=>{e.preventDefault();drop.style.background='';});
+});
+
+drop.addEventListener('drop',async e=>{
+  const dt = e.dataTransfer; if(!dt) return;
+  const files = dt.files; if(!files || files.length===0) return;
+  const folder = folderName.value.trim();
+  for(const f of files){ await addFile(f,folder); }
+  refresh();
+});
+
+// clear DB
+clearDbBtn.addEventListener('click',async ()=>{if(confirm('সব ফাইল মুছে ফেলতে চান?')){await clearDB();refresh();alert('ডাটাবেস খালি করা হয়েছে');}});
+
+filterType.addEventListener('change',refresh);
+
+// init
+openDB().then(()=>{refresh();}).catch(e=>{console.error(e);alert('IndexedDB খুলতে সমস্যা হয়েছে: '+e.message)});
+
 </script>
 </body>
 </html>
