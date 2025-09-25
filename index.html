@@ -3,184 +3,133 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>File Vault — Final PDF Fixed</title>
+  <title>File Vault (PDF Fix)</title>
   <style>
-    body{font-family:Arial, sans-serif;background:#f4f6fa;margin:0;padding:0;color:#111}
-    .wrap{max-width:900px;margin:20px auto;padding:16px}
-    .card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.1);margin-bottom:16px}
-    h1{margin:0 0 8px;font-size:20px}
-    input,button{padding:8px;border-radius:6px;border:1px solid #ccc;font-size:14px}
+    body{font-family:sans-serif;background:#f5f7fb;margin:0;padding:20px}
+    .card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.1);margin-bottom:20px}
+    h2{margin:0 0 10px}
+    input,button{padding:8px;border-radius:6px;border:1px solid #ccc}
     button{background:#0b74de;color:#fff;border:none;cursor:pointer}
-    .folders{margin-top:12px}
-    .folder{padding:10px;border-radius:8px;border:1px solid #eee;margin-bottom:12px;background:#fafafa}
-    .file-item{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:6px;background:#fff;margin:6px 0;border:1px solid #eee}
-    .muted{color:#666;font-size:13px}
-    iframe,embed,video,img{width:100%;height:60vh;border:1px solid #ccc;border-radius:8px}
-    @media(max-width:720px){ iframe,embed,video,img{height:45vh} }
-    .actions button{margin-left:6px;padding:6px 8px;font-size:13px}
-    .danger{background:#d9534f}
+    .folder{padding:10px;margin:10px 0;background:#fafafa;border:1px solid #ddd;border-radius:8px}
+    .file-item{display:flex;justify-content:space-between;align-items:center;padding:6px;margin:5px 0;background:#fff;border:1px solid #eee;border-radius:6px}
+    iframe,embed,video,img{width:100%;height:65vh;border:1px solid #ccc;border-radius:8px;background:#000}
+    .muted{color:#666;font-size:14px}
+    .small{font-size:13px;padding:5px 8px}
+    .danger{background:#d9534f;color:#fff}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" id="loginCard">
-      <h1>🔐 File Vault</h1>
-      <div class="muted">প্রথমবার একটি পাসওয়ার্ড সেট করুন।</div>
-      <div style="margin-top:10px">
-        <input id="pw" type="password" placeholder="পাসওয়ার্ড দিন" />
-        <button id="btnLogin">লগইন</button>
-      </div>
-    </div>
 
-    <div class="card" id="appCard" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h1>📁 File Vault</h1>
-        <button id="btnLogout">লগআউট</button>
-      </div>
-      <hr>
-      <input id="newFolderName" type="text" placeholder="নতুন ফোল্ডারের নাম" />
-      <button id="btnCreate">ফোল্ডার তৈরি</button>
+<div class="card" id="loginCard">
+  <h2>🔐 লগইন</h2>
+  <input type="password" id="pw" placeholder="পাসওয়ার্ড দিন" />
+  <button id="btnLogin">লগইন</button>
+</div>
 
-      <div id="foldersContainer" class="folders"></div>
-
-      <h3>Preview</h3>
-      <div id="previewArea" class="previewArea"></div>
-    </div>
+<div class="card" id="appCard" style="display:none">
+  <h2>📁 File Vault</h2>
+  <div>
+    <input type="text" id="folderName" placeholder="ফোল্ডারের নাম" />
+    <button id="btnCreate">ফোল্ডার তৈরি</button>
+    <button id="btnLogout" class="small">লগআউট</button>
   </div>
+  <div id="folders"></div>
+
+  <h3>Preview</h3>
+  <div id="preview"></div>
+</div>
 
 <script>
-const DB_NAME = 'filevault_pdf_fixed';
-const STORE = 'files';
-let db = null;
+const PASS_KEY="fv_pass";
+let data = JSON.parse(localStorage.getItem("fv_data")||"{}");
 
-function openDb(){
-  return new Promise((res, rej)=>{
-    const r = indexedDB.open(DB_NAME,1);
-    r.onupgradeneeded = ev=>{
-      const idb = ev.target.result;
-      if(!idb.objectStoreNames.contains(STORE)){
-        const os = idb.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
-        os.createIndex('folder','folder',{unique:false});
-      }
-    };
-    r.onsuccess=e=>{db=e.target.result;res(db);}
-    r.onerror=e=>rej(e);
-  });
-}
+function save(){ localStorage.setItem("fv_data",JSON.stringify(data)); }
 
-function addFile(folder,file){
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(STORE,'readwrite');
-    const st=tx.objectStore(STORE);
-    const rec={folder,name:file.name,type:file.type,size:file.size,blob:file,created:Date.now()};
-    const req=st.add(rec);
-    req.onsuccess=()=>res(true);
-    req.onerror=e=>rej(e);
-  });
-}
-
-function getFiles(folder){
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(STORE,'readonly');
-    const st=tx.objectStore(STORE).index('folder');
-    const req=st.getAll(IDBKeyRange.only(folder));
-    req.onsuccess=()=>res(req.result);
-    req.onerror=e=>rej(e);
-  });
-}
-
-function deleteFile(id){
-  return new Promise((res,rej)=>{
-    const tx=db.transaction(STORE,'readwrite');
-    const st=tx.objectStore(STORE);
-    const req=st.delete(id);
-    req.onsuccess=()=>res(true);
-    req.onerror=e=>rej(e);
-  });
-}
-
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));}
-function readableSize(b){if(b<1024)return b+" B";if(b<1024*1024)return (b/1024).toFixed(1)+" KB";return (b/1024/1024).toFixed(1)+" MB";}
-
-// UI
-const pwInput=document.getElementById('pw');
-document.getElementById('btnLogin').onclick=()=>{
-  const p=pwInput.value.trim();
-  const saved=localStorage.getItem('fv_pass');
-  if(!saved){localStorage.setItem('fv_pass',p);start();}
-  else if(p===saved)start();
-  else alert('ভুল পাসওয়ার্ড');
+document.getElementById('btnLogin').onclick=function(){
+  let p=document.getElementById('pw').value.trim();
+  let saved=localStorage.getItem(PASS_KEY);
+  if(!saved){ localStorage.setItem(PASS_KEY,p); showApp(); }
+  else if(p===saved){ showApp(); }
+  else alert("ভুল পাসওয়ার্ড!");
 };
-document.getElementById('btnLogout').onclick=()=>{
+
+document.getElementById('btnLogout').onclick=function(){
   document.getElementById('appCard').style.display="none";
   document.getElementById('loginCard').style.display="block";
 };
 
-async function start(){
-  await openDb();
+function showApp(){
   document.getElementById('loginCard').style.display="none";
   document.getElementById('appCard').style.display="block";
-  render();
+  renderFolders();
 }
 
-document.getElementById('btnCreate').onclick=()=>render();
+document.getElementById('btnCreate').onclick=function(){
+  let name=document.getElementById('folderName').value.trim();
+  if(!name) return;
+  if(!data[name]) data[name]=[];
+  save(); renderFolders(); document.getElementById('folderName').value="";
+};
 
-async function render(){
-  const cont=document.getElementById('foldersContainer');
-  cont.innerHTML='';
-  const folder=document.getElementById('newFolderName').value.trim()||'Default';
-  const div=document.createElement('div');
-  div.className='folder';
-  div.innerHTML=`<b>📂 ${escapeHtml(folder)}</b> 
-    <input type="file" multiple>`;
-  const list=document.createElement('div');
-  const files=await getFiles(folder);
-  if(files.length===0){
-    list.innerHTML='<div class="muted">ফোল্ডার খালি</div>';
-  }else{
-    for(const f of files){
-      const item=document.createElement('div');
-      item.className='file-item';
-      item.innerHTML=`<span>${escapeHtml(f.name)} <span class="muted">(${readableSize(f.size)})</span></span>`;
-      const actions=document.createElement('div');
-      const b1=document.createElement('button');b1.textContent='Preview';b1.onclick=()=>preview(f);
-      const b2=document.createElement('button');b2.textContent='Download';b2.onclick=()=>download(f);
-      const b3=document.createElement('button');b3.textContent='Delete';b3.className='danger';b3.onclick=async()=>{await deleteFile(f.id);render();};
-      actions.append(b1,b2,b3);
-      item.appendChild(actions);
+function renderFolders(){
+  let box=document.getElementById('folders'); box.innerHTML="";
+  Object.keys(data).forEach(folder=>{
+    let div=document.createElement('div');
+    div.className="folder";
+    div.innerHTML=`<b>${folder}</b> <input type="file" multiple onchange="uploadFiles('${folder}',this.files)">`;
+    let list=document.createElement('div');
+    data[folder].forEach((f,i)=>{
+      let item=document.createElement('div');
+      item.className="file-item";
+      item.innerHTML=`<span>${f.name}</span>
+      <div>
+        <button class="small" onclick="previewFile('${folder}',${i})">Preview</button>
+        <button class="small" onclick="downloadFile('${folder}',${i})">Download</button>
+        <button class="small danger" onclick="deleteFile('${folder}',${i})">Delete</button>
+      </div>`;
       list.appendChild(item);
-    }
-  }
-  div.querySelector('input').onchange=async e=>{
-    for(const f of e.target.files){await addFile(folder,f);}
-    render();
-  };
-  div.appendChild(list);
-  cont.appendChild(div);
+    });
+    div.appendChild(list); box.appendChild(div);
+  });
 }
 
-function preview(f){
-  const area=document.getElementById('previewArea');
-  area.innerHTML='';
-  const url=URL.createObjectURL(f.blob);
-  if(f.type==='application/pdf'||f.name.endsWith('.pdf')){
-    const em=document.createElement('embed');
-    em.src=url;em.type='application/pdf';
-    area.appendChild(em);
-    const link=document.createElement('div');
-    link.innerHTML=`<a href="${url}" target="_blank">নতুন ট্যাবে PDF খুলুন</a>`;
-    area.appendChild(link);
-  }else if(f.type.startsWith('video/')){
-    const v=document.createElement('video');v.controls=true;v.src=url;area.appendChild(v);
-  }else if(f.type.startsWith('image/')){
-    const i=document.createElement('img');i.src=url;area.appendChild(i);
-  }else{
-    const a=document.createElement('a');a.href=url;a.textContent='ডাউনলোড করুন';area.appendChild(a);
-  }
+function uploadFiles(folder,files){
+  [...files].forEach(file=>{
+    let reader=new FileReader();
+    reader.onload=e=>{
+      data[folder].push({name:file.name,type:file.type,data:e.target.result});
+      save(); renderFolders();
+    };
+    reader.readAsDataURL(file);
+  });
 }
-function download(f){
-  const url=URL.createObjectURL(f.blob);
-  const a=document.createElement('a');a.href=url;a.download=f.name;a.click();
+
+function previewFile(folder,i){
+  let f=data[folder][i];
+  let box=document.getElementById('preview');
+  box.innerHTML="";
+  if(f.type.includes("pdf")){
+    // PDF safe preview: embed + fallback link
+    let url=f.data;
+    let embed=document.createElement("embed");
+    embed.src=url; embed.type="application/pdf";
+    box.appendChild(embed);
+    let link=document.createElement("div");
+    link.className="muted"; link.innerHTML=`<a href="${url}" target="_blank">Open PDF in new tab / Download</a>`;
+    box.appendChild(link);
+  }
+  else if(f.type.includes("video")) box.innerHTML=`<video controls src="${f.data}"></video>`;
+  else if(f.type.includes("image")) box.innerHTML=`<img src="${f.data}">`;
+  else box.innerHTML=`<a href="${f.data}" download="${f.name}">Download ${f.name}</a>`;
+}
+
+function downloadFile(folder,i){
+  let f=data[folder][i]; let a=document.createElement('a');
+  a.href=f.data; a.download=f.name; a.click();
+}
+
+function deleteFile(folder,i){
+  if(confirm("ফাইল মুছবেন?")){ data[folder].splice(i,1); save(); renderFolders(); document.getElementById('preview').innerHTML=""; }
 }
 </script>
 </body>
