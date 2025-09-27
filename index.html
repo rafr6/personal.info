@@ -8,6 +8,7 @@
       font-family: Arial, Helvetica, sans-serif;
       margin: 50px;
       line-height: 1.6;
+      position: relative;
     }
     .header {
       text-align: center;
@@ -71,6 +72,14 @@
     .designation {
       margin-top: -5px;
     }
+    /* QR Code নিচে ডান সাইডে */
+    .qr-code {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      height: 100px;
+      width: 100px;
+    }
   </style>
 </head>
 <body>
@@ -104,5 +113,8 @@
       <div class="designation">Site Manager</div>
     </div>
   </div>
+
+  <!-- নিচে ডানদিকে QR কোড -->
+  <img src="qr.png" class="qr-code" alt="QR Code">
 </body>
 </html>
