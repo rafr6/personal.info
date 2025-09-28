@@ -1,513 +1,126 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>সেবা কেন্দ্র — Personal Media Vault</title>
-<style>
-  :root{
-    --bg1:#0f172a; --bg2:#0b1220; --card:#0b1227;
-    --accent:#06b6d4; --muted:#94a3b8; --glass: rgba(255,255,255,0.04);
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; min-height:100vh; background:linear-gradient(160deg,var(--bg1),var(--bg2));
-    color:#e6eef6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-  }
-  .wrap{max-width:1000px;margin:28px auto;padding:20px;}
-  header{display:flex;gap:16px;align-items:center;justify-content:space-between}
-  .brand{display:flex;gap:12px;align-items:center}
-  .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;box-shadow:0 6px 24px rgba(12,18,33,0.6)}
-  h1{margin:0;font-size:20px}
-  p.lead{margin:0;color:var(--muted);font-size:13px}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:16px; margin-top:18px; box-shadow: 0 6px 24px rgba(2,6,23,0.6);}
-  .upload-area{border:2px dashed rgba(255,255,255,0.06); padding:22px; border-radius:10px; text-align:center;}
-  .upload-area.dragover{background:rgba(255,255,255,0.02); border-color:rgba(255,255,255,0.12)}
-  .btn{display:inline-block;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#7c3aed);color:#041025;font-weight:700;text-decoration:none;cursor:pointer}
-  .muted{color:var(--muted);font-size:13px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px}
-  .item{background:var(--card);padding:8px;border-radius:10px;overflow:hidden;position:relative}
-  .thumb{width:100%;height:110px;border-radius:8px;background:#020617;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .meta{margin-top:8px;font-size:13px;color:var(--muted)}
-  .small{font-size:12px}
-  .actions{display:flex;gap:8px;margin-top:8px}
-  .a-btn{flex:1;padding:8px;border-radius:8px;background:rgba(255,255,255,0.03);text-align:center;cursor:pointer;font-weight:600}
-  .topbar{display:flex;gap:8px;align-items:center}
-  .pin-display{font-weight:700;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted)}
-  .settings{margin-left:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer}
-  footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
-  /* modal */
-  .modal-back{position:fixed;inset:0;background:linear-gradient(0deg, rgba(2,6,23,0.7), rgba(2,6,23,0.85));display:flex;align-items:center;justify-content:center;z-index:200}
-  .modal{width:360px;max-width:92%;background:#061023;padding:18px;border-radius:12px;box-shadow:0 20px 60px rgba(2,6,23,0.8)}
-  .modal h2{margin:0 0 8px 0}
-  .input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;margin-bottom:8px;font-size:16px}
-  .row{display:flex;gap:8px}
-  .note{font-size:12px;color:var(--muted)}
-  .controls{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
-  .danger{background:linear-gradient(90deg,#ff6b6b,#f43f5e);color:#fff}
-  @media (max-width:640px){
-    .thumb{height:140px}
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>আমার ভিডিও ও ছবি</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f3f4f6;
+      color: #333;
+    }
+    header {
+      background: #1e3a8a;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    .login-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 80vh;
+    }
+    .login-form {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    input[type="password"] {
+      padding: 10px;
+      width: 200px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    .content {
+      display: none;
+      padding: 20px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .gallery img, .gallery video, .gallery iframe {
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
+
   <header>
-    <div class="brand">
-      <div class="logo">সেবা</div>
-      <div>
-        <h1>Personal Media Vault</h1>
-        <p class="lead">ভিডিও ও ছবি নিরাপদে সংরক্ষণ করুন — স্থানীয়ভাবে আপনার ব্রাউজারে।</p>
-      </div>
-    </div>
-    <div class="topbar">
-      <div class="pin-display" id="pinHint">PIN: — — —</div>
-      <div class="settings" id="openSettings" title="Settings">⚙︎</div>
-    </div>
+    <h1>আমার কাজের ভিডিও ও ছবি</h1>
   </header>
 
-  <section class="card" id="mainCard">
-    <div class="upload-area" id="uploadArea">
-      <p style="font-weight:700;font-size:16px">ফাইল ড্র্যাগ করুন অথবা বাটনে ক্লিক করে আপলোড করুন</p>
-      <p class="muted small">ভিডিও, ছবি ও যেকোনো ফাইল — ব্রাউজারের মধ্যে নিরাপদে সংরক্ষিত থাকবে।</p>
-      <div style="margin-top:12px">
-        <input id="fileInput" type="file" multiple style="display:none" />
-        <label class="btn" id="chooseBtn">ফাইল নির্বাচন করুন</label>
-      </div>
-      <p class="note" style="margin-top:8px">মেমোরি: ব্রাউজারের সীমাবদ্ধতা থাকতে পারে (বড় ফাইল → ব্রাউজার ক্ষমতার ওপর নির্ভর করে)</p>
+  <!-- Login Box -->
+  <div class="login-box" id="loginBox">
+    <div class="login-form">
+      <h2>প্রবেশ করতে পাসওয়ার্ড দিন</h2>
+      <input type="password" id="passwordInput" placeholder="৬-৭ সংখ্যার পাসওয়ার্ড">
+      <br>
+      <button onclick="checkPassword()">লগইন</button>
+      <p id="errorMsg" style="color:red; display:none;">ভুল পাসওয়ার্ড!</p>
     </div>
-
-    <div class="card" style="margin-top:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>আপলোডকৃত ফাইলসমূহ</strong>
-        <div style="display:flex;gap:8px">
-          <button class="a-btn" id="downloadAll">Export ZIP</button>
-          <button class="a-btn" id="clearAll">Clear All</button>
-        </div>
-      </div>
-      <div id="itemsGrid" class="grid" style="margin-top:12px"></div>
-      <p id="emptyNote" class="muted" style="margin-top:12px">কোনো ফাইল নেই — আপলোড শুরু করুন।</p>
-    </div>
-    <footer>এই পেজটি GitHub Pages এ `index.html` হিসেবে হোস্ট করুন। সার্ভার-সাইড স্টোরেজ চাইলে বলুন — Firebase/S3 ইন্টিগ্রেশন করে দেব।</footer>
-  </section>
-</div>
-
-<!-- PIN Modal -->
-<div id="pinModal" class="modal-back" style="display:none">
-  <div class="modal" role="dialog" aria-modal="true">
-    <h2 id="modalTitle">আপনি নিরাপদে প্রবেশ করুন</h2>
-    <p class="note" id="modalNote">প্লিজ ৬-৭ সংখ্যার পিন লিখুন।</p>
-    <input id="pinInput" class="input" inputmode="numeric" placeholder="৬-৭ সংখ্যার পিন লিখুন" />
-    <div class="controls" style="margin-top:6px">
-      <button id="pinCancel" class="a-btn">বাতিল</button>
-      <button id="pinSubmit" class="btn">জমা করুন</button>
-    </div>
-    <p class="note" style="margin-top:8px">সতর্কতা: এই পিন ব্রাউজারের localStorage-এ নিরাপদ হাশ আকারে থাকবে। সার্ভার-পাসওয়ার্ড নয়।</p>
   </div>
-</div>
 
-<!-- Preview Modal -->
-<div id="previewModal" class="modal-back" style="display:none">
-  <div class="modal" style="width:90%;max-width:900px; padding:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <strong id="previewTitle">Preview</strong>
-      <div style="display:flex;gap:8px">
-        <button id="previewDownload" class="a-btn">Download</button>
-        <button id="previewClose" class="a-btn">Close</button>
-      </div>
+  <!-- Main Content -->
+  <div class="content" id="mainContent">
+    <h2>📹 ভিডিও</h2>
+    <div class="gallery">
+      <!-- GitHub এ ছোট ভিডিও (100MB এর নিচে) -->
+      <video controls>
+        <source src="videos/sample.mp4" type="video/mp4">
+      </video>
+
+      <!-- YouTube Embed -->
+      <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+        frameborder="0" allowfullscreen></iframe>
+
+      <!-- Google Drive Embed -->
+      <iframe src="https://drive.google.com/file/d/FILE_ID/preview" 
+        allow="autoplay"></iframe>
     </div>
-    <div id="previewBody" style="margin-top:12px;max-height:70vh;overflow:auto"></div>
+
+    <h2>🖼️ ছবি</h2>
+    <div class="gallery">
+      <!-- GitHub এ রাখা ছবি -->
+      <img src="images/pic1.jpg" alt="ছবি ১">
+      <img src="images/pic2.jpg" alt="ছবি ২">
+    </div>
   </div>
-</div>
 
-<script>
-/* ======= Utilities: crypto-hash, IDB wrapper (small), helpers ======= */
-async function sha256Hex(str){
-  const enc = new TextEncoder();
-  const data = enc.encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  const bytes = new Uint8Array(hash);
-  return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+  <script>
+    function checkPassword() {
+      const password = document.getElementById("passwordInput").value;
+      const correctPassword = "123456"; // এখানে আপনার নিজের পাসওয়ার্ড দিন
 
-/* Minimal IndexedDB helper for a single objectStore 'files' */
-const DB = {
-  db: null,
-  async init(){
-    return new Promise((res,rej)=>{
-      const rq = indexedDB.open('media-vault-db', 1);
-      rq.onupgradeneeded = e=>{
-        const d = e.target.result;
-        if(!d.objectStoreNames.contains('files')){
-          const store = d.createObjectStore('files', { keyPath: 'id' });
-          store.createIndex('byDate', 'time');
-        }
-      };
-      rq.onsuccess = e=>{
-        this.db = e.target.result;
-        res();
-      };
-      rq.onerror = e=> rej(e);
-    });
-  },
-  put(item){
-    return new Promise((res,rej)=>{
-      const tx = this.db.transaction('files','readwrite');
-      tx.objectStore('files').put(item);
-      tx.oncomplete = ()=>res();
-      tx.onerror = e=>rej(e);
-    });
-  },
-  getAll(){
-    return new Promise((res,rej)=>{
-      const tx = this.db.transaction('files','readonly');
-      const req = tx.objectStore('files').getAll();
-      req.onsuccess = ()=>res(req.result);
-      req.onerror = e=>rej(e);
-    });
-  },
-  delete(id){
-    return new Promise((res,rej)=>{
-      const tx = this.db.transaction('files','readwrite');
-      tx.objectStore('files').delete(id);
-      tx.oncomplete = ()=>res();
-      tx.onerror = e=>rej(e);
-    });
-  },
-  clear(){
-    return new Promise((res,rej)=>{
-      const tx = this.db.transaction('files','readwrite');
-      tx.objectStore('files').clear();
-      tx.oncomplete = ()=>res();
-      tx.onerror = e=>rej(e);
-    });
-  }
-};
-
-/* ======= App logic ======= */
-const fileInput = document.getElementById('fileInput');
-const chooseBtn = document.getElementById('chooseBtn');
-const uploadArea = document.getElementById('uploadArea');
-const itemsGrid = document.getElementById('itemsGrid');
-const emptyNote = document.getElementById('emptyNote');
-const pinModal = document.getElementById('pinModal');
-const pinInput = document.getElementById('pinInput');
-const pinSubmit = document.getElementById('pinSubmit');
-const pinCancel = document.getElementById('pinCancel');
-const pinHint = document.getElementById('pinHint');
-const openSettings = document.getElementById('openSettings');
-const previewModal = document.getElementById('previewModal');
-const previewBody = document.getElementById('previewBody');
-const previewTitle = document.getElementById('previewTitle');
-const previewClose = document.getElementById('previewClose');
-const previewDownload = document.getElementById('previewDownload');
-const downloadAllBtn = document.getElementById('downloadAll');
-const clearAllBtn = document.getElementById('clearAll');
-
-let currentPreviewItem = null;
-
-/* PIN functions — stored hashed in localStorage */
-const PIN_KEY = 'media_vault_pin_hash';
-async function hasPin(){
-  return !!localStorage.getItem(PIN_KEY);
-}
-async function setPin(pin){
-  const h = await sha256Hex(pin);
-  localStorage.setItem(PIN_KEY, h);
-}
-async function verifyPin(pin){
-  const h = await sha256Hex(pin);
-  return h === localStorage.getItem(PIN_KEY);
-}
-function maskPinForUI(){
-  if(!localStorage.getItem(PIN_KEY)) return '— — —';
-  return '●●●●●';
-}
-
-/* show PIN modal: if no pin set -> set mode; else verify mode */
-async function showPinModal(){
-  const first = !(await hasPin());
-  pinModal.style.display = 'flex';
-  document.getElementById('modalTitle').innerText = first ? 'নতুন পিন সেট করুন' : 'পিন লিখে প্রবেশ করুন';
-  document.getElementById('modalNote').innerText = first ? '৬-৭ সংখ্যার পিন তৈরি করুন (স্টোর হবে হ্যাশ আকারে)।' : 'আপনি আপনার পিন লিখুন।';
-  pinInput.value = '';
-  pinInput.placeholder = first ? 'নতুন ৬-৭ সংখ্যার পিন' : 'আপনার পিন';
-  pinSubmit.onclick = async ()=>{
-    const v = pinInput.value.trim();
-    if(!/^[0-9]{6,7}$/.test(v)){ alert('পিন অবশ্যই ৬-৭ সংখ্যার হতে হবে'); return; }
-    if(first){
-      await setPin(v);
-      pinModal.style.display='none';
-      pinHint.innerText = 'PIN: ●●●●●';
-      loadAllItems();
-    } else {
-      const ok = await verifyPin(v);
-      if(!ok){ alert('ভুল পিন — আবার চেষ্টা করুন'); return; }
-      pinModal.style.display='none';
-      pinHint.innerText = 'PIN: ●●●●●';
-      loadAllItems();
+      if (password === correctPassword) {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+      } else {
+        document.getElementById("errorMsg").style.display = "block";
+      }
     }
-  };
-  pinCancel.onclick = ()=>{ /* যদি ব্যবহারকারী বাতিল করে, আমরা অ্যাপ লুকায় রাখি */ location.href='#'; };
-}
-
-/* Drag & Drop */
-['dragenter','dragover'].forEach(ev=>{
-  uploadArea.addEventListener(ev, e=>{ e.preventDefault(); uploadArea.classList.add('dragover'); });
-});
-['dragleave','drop'].forEach(ev=>{
-  uploadArea.addEventListener(ev, e=>{ e.preventDefault(); uploadArea.classList.remove('dragover'); });
-});
-uploadArea.addEventListener('drop', e=>{
-  const dt = e.dataTransfer;
-  if(dt && dt.files) handleFiles(dt.files);
-});
-
-chooseBtn.addEventListener('click', ()=> fileInput.click());
-fileInput.addEventListener('change', ()=> handleFiles(fileInput.files));
-
-async function handleFiles(fileList){
-  // check PIN verified
-  if(!localStorage.getItem(PIN_KEY)){ alert('প্রথমে পিন সেট করুন'); await showPinModal(); return; }
-  // proceed
-  const arr = Array.from(fileList);
-  for(const f of arr){
-    await storeFileBlob(f);
-  }
-  await loadAllItems();
-}
-
-/* store file into IDB */
-async function storeFileBlob(file){
-  // create unique id
-  const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
-  const item = {
-    id,
-    name: file.name,
-    type: file.type || 'application/octet-stream',
-    size: file.size,
-    time: Date.now(),
-    blob: file // store blob directly
-  };
-  await DB.put(item);
-}
-
-/* render items */
-function humanSize(n){
-  if(n < 1024) return n + ' B';
-  if(n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
-  if(n < 1024*1024*1024) return (n/(1024*1024)).toFixed(1) + ' MB';
-  return (n/(1024*1024*1024)).toFixed(2) + ' GB';
-}
-
-async function loadAllItems(){
-  const list = await DB.getAll();
-  itemsGrid.innerHTML = '';
-  if(!list.length){ emptyNote.style.display='block'; return; } else emptyNote.style.display='none';
-  list.sort((a,b)=>b.time - a.time);
-  for(const it of list){
-    const el = document.createElement('div'); el.className='item';
-    // thumb
-    const thumb = document.createElement('div'); thumb.className='thumb';
-    if(it.type.startsWith('image/')){
-      const url = URL.createObjectURL(it.blob);
-      const img = document.createElement('img'); img.src = url; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
-      thumb.appendChild(img);
-    } else if(it.type.startsWith('video/')){
-      const url = URL.createObjectURL(it.blob);
-      const vid = document.createElement('video'); vid.src = url; vid.controls=false; vid.muted=true; vid.playsInline=true;
-      vid.style.width='100%'; vid.style.height='100%'; vid.style.objectFit='cover';
-      // try to play a short preview
-      vid.addEventListener('canplay', ()=>{ try{ vid.play(); }catch(e){} });
-      thumb.appendChild(vid);
-    } else {
-      const icon = document.createElement('div'); icon.innerText='📄'; icon.style.fontSize='36px';
-      thumb.appendChild(icon);
-    }
-    el.appendChild(thumb);
-
-    const meta = document.createElement('div'); meta.className='meta';
-    meta.innerHTML = `<div style="display:flex;justify-content:space-between;"><div>${escapeHtml(it.name)}</div><div class="small">${humanSize(it.size)}</div></div><div class="small muted">${new Date(it.time).toLocaleString()}</div>`;
-    el.appendChild(meta);
-
-    const actions = document.createElement('div'); actions.className='actions';
-    const openBtn = document.createElement('div'); openBtn.className='a-btn'; openBtn.innerText='Open';
-    openBtn.onclick = ()=> openPreview(it);
-    const dlBtn = document.createElement('div'); dlBtn.className='a-btn'; dlBtn.innerText='Download';
-    dlBtn.onclick = ()=> downloadBlob(it);
-    const delBtn = document.createElement('div'); delBtn.className='a-btn'; delBtn.innerText='Delete';
-    delBtn.onclick = async ()=>{
-      if(!confirm('ফাইলটি মুছে ফেলবেন?')) return;
-      await DB.delete(it.id);
-      URL.revokeObjectURL(it._tempUrl || '');
-      await loadAllItems();
-    };
-    actions.appendChild(openBtn); actions.appendChild(dlBtn); actions.appendChild(delBtn);
-    el.appendChild(actions);
-    itemsGrid.appendChild(el);
-  }
-}
-
-/* Preview handlers */
-function openPreview(item){
-  currentPreviewItem = item;
-  previewBody.innerHTML = '';
-  previewTitle.innerText = item.name;
-  const t = item.type || '';
-  const url = URL.createObjectURL(item.blob);
-  item._tempUrl = url;
-  if(t.startsWith('image/')){
-    const img = document.createElement('img'); img.src = url; img.style.maxWidth='100%'; img.style.height='auto';
-    previewBody.appendChild(img);
-  } else if(t.startsWith('video/')){
-    const v = document.createElement('video'); v.src = url; v.controls=true; v.style.maxWidth='100%'; v.style.height='auto';
-    previewBody.appendChild(v);
-  } else {
-    const info = document.createElement('div'); info.className='note'; info.innerText = 'Preview not available. Use Download to open.';
-    previewBody.appendChild(info);
-  }
-  previewDownload.onclick = ()=> downloadBlob(item);
-  previewModal.style.display='flex';
-}
-previewClose.onclick = ()=> {
-  previewModal.style.display='none';
-  if(currentPreviewItem && currentPreviewItem._tempUrl) URL.revokeObjectURL(currentPreviewItem._tempUrl);
-  currentPreviewItem = null;
-};
-
-/* download single blob */
-function downloadBlob(item){
-  const a = document.createElement('a');
-  const url = URL.createObjectURL(item.blob);
-  a.href = url;
-  a.download = item.name;
-  document.body.appendChild(a); a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 2000);
-}
-
-/* Export ZIP — uses JSZip-like minimal approach? We cannot include external libs.
-   Instead we'll provide a simple fallback: if many large files, we offer to download each individually,
-   but we can also create a zip using the experimental CompressionStream if available. */
-
-async function exportAllAsZip(){
-  const list = await DB.getAll();
-  if(!list.length){ alert('কোনো ফাইল নেই'); return; }
-
-  // Try CompressionStream + ZIP central directory: that's complex.
-  // Simpler: create a .tar archive (plain) — browsers cannot reliably stream zip without heavy libs.
-  // We'll create a .tar of files — most OS can extract .tar. This avoids external libs.
-  // Create TAR in memory:
-  try{
-    const chunks = [];
-    for(const f of list){
-      const header = tarHeader(f.name, f.size);
-      chunks.push(header);
-      const array = await blobToArrayBuffer(f.blob);
-      chunks.push(new Uint8Array(array));
-      // pad to 512
-      const pad = (512 - (f.size % 512)) % 512;
-      if(pad) chunks.push(new Uint8Array(pad));
-    }
-    // two 512 blocks of zeros
-    chunks.push(new Uint8Array(1024));
-    const totalLen = chunks.reduce((s,c)=>s + c.length, 0);
-    const out = new Uint8Array(totalLen);
-    let p=0; for(const c of chunks){ out.set(c, p); p+=c.length; }
-    const tarBlob = new Blob([out], { type:'application/x-tar' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(tarBlob); a.download = 'media_vault_backup.tar';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
-  } catch(e){
-    alert('Export failed: ' + e.message);
-  }
-}
-
-/* TAR helpers */
-function tarHeader(filename, size){
-  // minimal ustar header 512 bytes
-  const buf = new Uint8Array(512);
-  function write(str, offset, len){
-    for(let i=0;i<len;i++){
-      buf[offset+i] = i < str.length ? str.charCodeAt(i) : 0;
-    }
-  }
-  write(filename, 0, 100);
-  write(oct(size, 11) + ' ', 124, 12);
-  write('0000777 ', 100, 8); // mode
-  write('0000000 ', 108, 8); // uid
-  write('0000000 ', 116, 8); // gid
-  write(oct(Math.floor(Date.now()/1000),11)+' ', 136, 12);
-  write('        ', 148, 8); // checksum placeholder
-  write('0', 156, 1);
-  write('ustar', 257, 6);
-  write('00', 263, 2);
-  // compute checksum
-  let sum = 0;
-  for(let i=0;i<512;i++) sum += buf[i];
-  const chk = oct(sum, 6) + '\0 ';
-  write(chk, 148, 8);
-  return buf;
-}
-function oct(val, width){
-  let s = val.toString(8);
-  if(s.length > width) s = s.slice(-width);
-  return s.padStart(width, '0');
-}
-function blobToArrayBuffer(b){ return new Response(b).arrayBuffer(); }
-
-/* clear all */
-clearAllBtn.onclick = async ()=>{
-  if(!confirm('সব ফাইল মুছে ফেলবে?')) return;
-  await DB.clear(); await loadAllItems();
-};
-
-/* simple HTML escape */
-function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
-
-/* settings — allow changing PIN (requires existing PIN) */
-openSettings.onclick = async ()=>{
-  const action = prompt('Settings:\n1) Change PIN\n2) Remove PIN (clear all files too!)\nনম্বর লিখুন (1 বা 2) অথবা বাতিল করুন');
-  if(action === '1'){
-    const cur = prompt('বর্তমান পিন লিখুন');
-    if(!cur) return;
-    if(!(await verifyPin(cur))){ alert('পিন মিলছে না'); return; }
-    const np = prompt('নতুন ৬-৭ সংখ্যার পিন লিখুন');
-    if(!np || !/^[0-9]{6,7}$/.test(np)){ alert('পিন ৬-৭ সংখ্যার হতে হবে'); return; }
-    await setPin(np); alert('পিন আপডেট হয়েছে');
-    pinHint.innerText = 'PIN: ●●●●●';
-  } else if(action === '2'){
-    if(!confirm('PIN সরালে সাথে সব ফাইলও মুছে যাবে — নিশ্চিত?')) return;
-    localStorage.removeItem(PIN_KEY);
-    await DB.clear();
-    await loadAllItems();
-    pinHint.innerText = 'PIN: — — —';
-    alert('PIN সরানো হল ও সব ডাটা মুছে দেওয়া হল।');
-  }
-};
-
-/* initialization */
-(async ()=>{
-  await DB.init();
-  const has = await hasPin();
-  pinHint.innerText = has ? 'PIN: ●●●●●' : 'PIN: — — —';
-  // show PIN modal to lock by default
-  await showPinModal();
-})();
-
-/* Export button */
-downloadAllBtn.onclick = exportAllAsZip;
-
-/* Keyboard convenience */
-document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape'){
-    if(pinModal.style.display === 'flex') pinModal.style.display='none';
-    if(previewModal.style.display === 'flex') previewModal.style.display='none';
-  }
-});
-
-/* End */
-</script>
+  </script>
 </body>
 </html>
