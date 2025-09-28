@@ -1,126 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <title>আমার ভিডিও ও ছবি</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f3f4f6;
-      color: #333;
-    }
-    header {
-      background: #1e3a8a;
-      color: white;
-      padding: 15px;
-      text-align: center;
-    }
-    .login-box {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 80vh;
-    }
-    .login-form {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-    input[type="password"] {
-      padding: 10px;
-      width: 200px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 15px;
-    }
-    button {
-      padding: 10px 20px;
-      border: none;
-      background: #2563eb;
-      color: white;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1e40af;
-    }
-    .content {
-      display: none;
-      padding: 20px;
-    }
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-    .gallery img, .gallery video, .gallery iframe {
-      width: 100%;
-      border-radius: 10px;
-      box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>সিভি — [আপনার নাম]</title>
+<style>
+  :root{ --accent:#0b74de; --muted:#666; --paper:#fff; --bg:#f4f6fb; }
+  *{box-sizing:border-box;font-family: "Noto Sans Bengali", "SolaimanLipi", Arial, sans-serif}
+  body{margin:0;background:var(--bg);padding:24px; color:#222}
+  .card{max-width:820px;margin:0 auto;background:var(--paper);box-shadow:0 8px 30px rgba(20,30,60,0.08);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 320px;}
+  .main{padding:28px;}
+  .side{background:linear-gradient(180deg,#fafafa,#f6f8fb);padding:28px;border-left:1px solid #eee;}
+  h1{margin:0;font-size:22px;color:#0b2745}
+  .sub{color:var(--muted);margin-top:6px;font-size:14px}
+  .section{margin-top:18px}
+  .section h3{margin:0 0 8px 0;font-size:15px;color:var(--accent)}
+  .field{margin-bottom:6px;font-size:14px;color:#222}
+  ul{margin:6px 0 0 16px;padding:0}
+  li{margin-bottom:6px}
+  .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+  .pill{background:#eef6ff;color:var(--accent);padding:6px 8px;border-radius:6px;font-size:13px}
+  /* QR pin */
+  .qr{position:absolute;right:16px;bottom:16px;width:90px; height:90px; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(20,30,60,0.12)}
+  .container{position:relative}
+  /* print styles */
+  @media print{
+    body{background:#fff;padding:0}
+    .card{box-shadow:none;max-width:100%;grid-template-columns:1fr 240px}
+    .qr{display:none} /* QR_hidden_when_printing */
+  }
+  /* responsive */
+  @media (max-width:800px){
+    .card{grid-template-columns:1fr; padding-bottom:120px}
+    .side{order:2;border-left:none;border-top:1px solid #eee}
+    .qr{right:12px;bottom:12px}
+  }
+</style>
 </head>
 <body>
+  <div class="container">
+  <div class="card" role="article" aria-label="CV of [আপনার নাম]">
+    <div class="main">
+      <h1>[আপনার পুরো নাম]</h1>
+      <div class="sub">[পদবী — যেমন: জুনিয়র সফটওয়্যার ইঞ্জিনিয়ার]</div>
 
-  <header>
-    <h1>আমার কাজের ভিডিও ও ছবি</h1>
-  </header>
+      <div class="section">
+        <h3>ক্যারিয়ার উদ্দেশ্য</h3>
+        <div class="field">[দুই-তিন লাইনে আপনার উদ্দেশ্য লিখুন — কোম্পানিকে কীভাবে মূল্য যোগ করবেন তা উল্লেখ করুন]</div>
+      </div>
 
-  <!-- Login Box -->
-  <div class="login-box" id="loginBox">
-    <div class="login-form">
-      <h2>প্রবেশ করতে পাসওয়ার্ড দিন</h2>
-      <input type="password" id="passwordInput" placeholder="৬-৭ সংখ্যার পাসওয়ার্ড">
-      <br>
-      <button onclick="checkPassword()">লগইন</button>
-      <p id="errorMsg" style="color:red; display:none;">ভুল পাসওয়ার্ড!</p>
+      <div class="section">
+        <h3>শিক্ষা</h3>
+        <div class="field"><strong>[ডিগ্রি]</strong> — [ইনস্টিটিউশন], [বর্ষ] <div class="sub">[বিষয় • সিজিপিএ/শ্রেণি]</div></div>
+        <ul>
+          <li>[যদি গুরুত্বপূর্ণ কোর্স বা থিসিস থাকে সেখান লিখুন]</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>কর্ম অভিজ্ঞতা</h3>
+        <div class="field"><strong>[পদবী]</strong> — [কোম্পানি নাম] <span class="sub">[মাস/বছর — মাস/বছর]</span>
+          <ul>
+            <li>[দায়িত্ব/অর্জন ১]</li>
+            <li>[দায়িত্ব/অর্জন ২]</li>
+          </ul>
+        </div>
+        <!-- আরো অভিজ্ঞতা থাকলে এখানে যোগ করুন -->
+      </div>
+
+      <div class="section">
+        <h3>প্রকল্প</h3>
+        <div class="field"><strong>[প্রকল্প নাম]</strong> — সংক্ষিপ্ত বর্ণনা, টেকস্ট্যাক, লিংক (যদি থাকে)</div>
+      </div>
+
     </div>
+
+    <aside class="side">
+      <div class="section">
+        <h3>যোগাযোগ</h3>
+        <div class="field">ফোন: <strong>[+88XXXXXXXXXXX]</strong></div>
+        <div class="field">ইমেইল: <strong>[you@example.com]</strong></div>
+        <div class="field">ঠিকানা: <span class="sub">[আপনার ঠিকানা]</span></div>
+        <div class="field">লিংকডইন: <span class="sub">[link]</span></div>
+      </div>
+
+      <div class="section">
+        <h3>দক্ষতা</h3>
+        <div class="field"><strong>টেকনিক্যাল:</strong></div>
+        <ul>
+          <li>HTML, CSS, JavaScript, React</li>
+          <li>PHP / Laravel, MySQL, Git</li>
+        </ul>
+        <div class="field"><strong>সফটস্কিল:</strong></div>
+        <ul>
+          <li>কমিউনিকেশন, টিমওয়ার্ক, টাইম ম্যানেজমেন্ট</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>সার্টিফিকেট</h3>
+        <ul>
+          <li>[সার্টিফিকেট নাম — প্রদানকারী, বছর]</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>ভাষা</h3>
+        <ul>
+          <li>বাংলা — مادری</li>
+          <li>ইংরেজি — ভাল</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <h3>রেফারেন্স</h3>
+        <div class="field">অনুরোধে প্রদান করা হবে</div>
+      </div>
+    </aside>
   </div>
 
-  <!-- Main Content -->
-  <div class="content" id="mainContent">
-    <h2>📹 ভিডিও</h2>
-    <div class="gallery">
-      <!-- GitHub এ ছোট ভিডিও (100MB এর নিচে) -->
-      <video controls>
-        <source src="videos/sample.mp4" type="video/mp4">
-      </video>
-
-      <!-- YouTube Embed -->
-      <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-        frameborder="0" allowfullscreen></iframe>
-
-      <!-- Google Drive Embed -->
-      <iframe src="https://drive.google.com/file/d/FILE_ID/preview" 
-        allow="autoplay"></iframe>
-    </div>
-
-    <h2>🖼️ ছবি</h2>
-    <div class="gallery">
-      <!-- GitHub এ রাখা ছবি -->
-      <img src="images/pic1.jpg" alt="ছবি ১">
-      <img src="images/pic2.jpg" alt="ছবি ২">
-    </div>
+  <!-- QR placeholder: replace "qr-pin.png" with your actual QR PNG -->
+  <img class="qr" src="qr-pin.png" alt="QR code (প্রতিস্থাপন করুন qr-pin.png)">
   </div>
-
-  <script>
-    function checkPassword() {
-      const password = document.getElementById("passwordInput").value;
-      const correctPassword = "123456"; // এখানে আপনার নিজের পাসওয়ার্ড দিন
-
-      if (password === correctPassword) {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("mainContent").style.display = "block";
-      } else {
-        document.getElementById("errorMsg").style.display = "block";
-      }
-    }
-  </script>
 </body>
 </html>
