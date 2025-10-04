@@ -3,124 +3,169 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>সিভি — [আপনার নাম]</title>
+<title>Lanyard / গলার বীজ ডিজাইন প্রিভিউ</title>
 <style>
-  :root{ --accent:#0b74de; --muted:#666; --paper:#fff; --bg:#f4f6fb; }
-  *{box-sizing:border-box;font-family: "Noto Sans Bengali", "SolaimanLipi", Arial, sans-serif}
-  body{margin:0;background:var(--bg);padding:24px; color:#222}
-  .card{max-width:820px;margin:0 auto;background:var(--paper);box-shadow:0 8px 30px rgba(20,30,60,0.08);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 320px;}
-  .main{padding:28px;}
-  .side{background:linear-gradient(180deg,#fafafa,#f6f8fb);padding:28px;border-left:1px solid #eee;}
-  h1{margin:0;font-size:22px;color:#0b2745}
-  .sub{color:var(--muted);margin-top:6px;font-size:14px}
-  .section{margin-top:18px}
-  .section h3{margin:0 0 8px 0;font-size:15px;color:var(--accent)}
-  .field{margin-bottom:6px;font-size:14px;color:#222}
-  ul{margin:6px 0 0 16px;padding:0}
-  li{margin-bottom:6px}
-  .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
-  .pill{background:#eef6ff;color:var(--accent);padding:6px 8px;border-radius:6px;font-size:13px}
-  /* QR pin */
-  .qr{position:absolute;right:16px;bottom:16px;width:90px; height:90px; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(20,30,60,0.12)}
-  .container{position:relative}
-  /* print styles */
-  @media print{
-    body{background:#fff;padding:0}
-    .card{box-shadow:none;max-width:100%;grid-template-columns:1fr 240px}
-    .qr{display:none} /* QR_hidden_when_printing */
+  body { font-family: Arial, sans-serif; background:#f6f8fb; padding:24px; color:#111; }
+  h1{font-size:18px;margin-bottom:6px}
+  .wrap{display:flex;gap:18px;flex-wrap:wrap}
+  .card-preview,.design {
+    background:#fff;border-radius:8px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);
   }
-  /* responsive */
-  @media (max-width:800px){
-    .card{grid-template-columns:1fr; padding-bottom:120px}
-    .side{order:2;border-left:none;border-top:1px solid #eee}
-    .qr{right:12px;bottom:12px}
-  }
+  .card-preview{width:220px;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .id-mock{width:90px;height:140px;background:#fff;border:1px solid #ddd;box-shadow:0 4px 10px rgba(0,0,0,0.06);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px}
+  .lanyard-preview{width:320px;height:64px;background:linear-gradient(#fff,#fff);display:flex;align-items:center;justify-content:center;border-radius:6px}
+  .row{display:flex;gap:12px;align-items:center}
+  .design { width: 360px; }
+  .design h3{margin:6px 0 8px 0;font-size:14px}
+  .btn { display:inline-block;padding:8px 10px;background:#1e88e5;color:#fff;border-radius:6px;text-decoration:none;font-size:13px }
+  .small { font-size:12px;color:#666;margin-top:8px }
+  pre { background:#f3f6fb;padding:8px;border-radius:6px;overflow:auto;font-size:11px }
 </style>
 </head>
 <body>
-  <div class="container">
-  <div class="card" role="article" aria-label="CV of [আপনার নাম]">
-    <div class="main">
-      <h1>[আপনার পুরো নাম]</h1>
-      <div class="sub">[পদবী — যেমন: জুনিয়র সফটওয়্যার ইঞ্জিনিয়ার]</div>
 
-      <div class="section">
-        <h3>ক্যারিয়ার উদ্দেশ্য</h3>
-        <div class="field">[দুই-তিন লাইনে আপনার উদ্দেশ্য লিখুন — কোম্পানিকে কীভাবে মূল্য যোগ করবেন তা উল্লেখ করুন]</div>
+<h1>আইডি কার্ড ল্যানিয়ার ডিজাইন — প্রিভিউ ও SVG ডাউনলোড</h1>
+<p class="small">নিচের কোনো একটি নির্বাচন করে প্রিন্ট করো — প্রতিটি ডিজাইনের SVG ডাউনলোড বাটন দেওয়া আছে। রিবনের প্রিন্টারের জন্য 20–25mm (0.8–1.0 inch) প্রস্থ সাধারণত ব্যবহার হয়।</p>
+
+<div class="wrap">
+  <!-- Preview column -->
+  <div class="card-preview">
+    <div style="font-size:12px;color:#666">ID কার্ড + ল্যানিয়ার কিভাবে দেখায়</div>
+
+    <!-- Lanyard + card mockup -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+      <!-- top loop -->
+      <svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#1e88e5"/><stop offset="1" stop-color="#43a047"/></linearGradient>
+        </defs>
+        <!-- strap left -->
+        <rect x="18" y="4" width="18" height="32" rx="6" fill="url(#g1)"/>
+        <rect x="84" y="4" width="18" height="32" rx="6" fill="url(#g1)"/>
+        <!-- ring -->
+        <ellipse cx="60" cy="20" rx="8" ry="8" fill="#444"/>
+      </svg>
+
+      <div class="id-mock">
+        <div style="font-weight:bold">COMPANY</div>
+        <div style="font-size:10px;margin-top:8px">MD RAHIM MIA</div>
       </div>
-
-      <div class="section">
-        <h3>শিক্ষা</h3>
-        <div class="field"><strong>[ডিগ্রি]</strong> — [ইনস্টিটিউশন], [বর্ষ] <div class="sub">[বিষয় • সিজিপিএ/শ্রেণি]</div></div>
-        <ul>
-          <li>[যদি গুরুত্বপূর্ণ কোর্স বা থিসিস থাকে সেখান লিখুন]</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3>কর্ম অভিজ্ঞতা</h3>
-        <div class="field"><strong>[পদবী]</strong> — [কোম্পানি নাম] <span class="sub">[মাস/বছর — মাস/বছর]</span>
-          <ul>
-            <li>[দায়িত্ব/অর্জন ১]</li>
-            <li>[দায়িত্ব/অর্জন ২]</li>
-          </ul>
-        </div>
-        <!-- আরো অভিজ্ঞতা থাকলে এখানে যোগ করুন -->
-      </div>
-
-      <div class="section">
-        <h3>প্রকল্প</h3>
-        <div class="field"><strong>[প্রকল্প নাম]</strong> — সংক্ষিপ্ত বর্ণনা, টেকস্ট্যাক, লিংক (যদি থাকে)</div>
-      </div>
-
     </div>
 
-    <aside class="side">
-      <div class="section">
-        <h3>যোগাযোগ</h3>
-        <div class="field">ফোন: <strong>[+88XXXXXXXXXXX]</strong></div>
-        <div class="field">ইমেইল: <strong>[you@example.com]</strong></div>
-        <div class="field">ঠিকানা: <span class="sub">[আপনার ঠিকানা]</span></div>
-        <div class="field">লিংকডইন: <span class="sub">[link]</span></div>
-      </div>
-
-      <div class="section">
-        <h3>দক্ষতা</h3>
-        <div class="field"><strong>টেকনিক্যাল:</strong></div>
-        <ul>
-          <li>HTML, CSS, JavaScript, React</li>
-          <li>PHP / Laravel, MySQL, Git</li>
-        </ul>
-        <div class="field"><strong>সফটস্কিল:</strong></div>
-        <ul>
-          <li>কমিউনিকেশন, টিমওয়ার্ক, টাইম ম্যানেজমেন্ট</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3>সার্টিফিকেট</h3>
-        <ul>
-          <li>[সার্টিফিকেট নাম — প্রদানকারী, বছর]</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3>ভাষা</h3>
-        <ul>
-          <li>বাংলা — مادری</li>
-          <li>ইংরেজি — ভাল</li>
-        </ul>
-      </div>
-
-      <div class="section">
-        <h3>রেফারেন্স</h3>
-        <div class="field">অনুরোধে প্রদান করা হবে</div>
-      </div>
-    </aside>
+    <div class="small">প্রিভিউ — শুধুমাত্র প্রদর্শন</div>
   </div>
 
-  <!-- QR placeholder: replace "qr-pin.png" with your actual QR PNG -->
-  <img class="qr" src="qr-pin.png" alt="QR code (প্রতিস্থাপন করুন qr-pin.png)">
+  <!-- Design 1 -->
+  <div class="design">
+    <h3>ডিজাইন ১ — Repeating company name (ক্লাসিক)</h3>
+    <div class="lanyard-preview" id="l1">
+      <!-- SVG inline -->
+      <svg id="svg1" xmlns="http://www.w3.org/2000/svg" width="320" height="64" viewBox="0 0 320 64">
+        <rect width="320" height="64" fill="#0d356d"/>
+        <g font-family="Arial" font-size="14" fill="#fff" text-anchor="middle">
+          <!-- repeat text across ribbon -->
+          <text x="40" y="38">SM ENGINEERING</text>
+          <text x="120" y="38">SM ENGINEERING</text>
+          <text x="200" y="38">SM ENGINEERING</text>
+          <text x="280" y="38">SM ENGINEERING</text>
+        </g>
+      </svg>
+    </div>
+    <div style="margin-top:8px">
+      <a class="btn" href="#" onclick="downloadSVG('svg1','lanyard-classic.svg')">Download SVG</a>
+      <span class="small"> — রিবন প্রিন্টিং-এর জন্য টেক্সট বারবার ছাপানো</span>
+    </div>
   </div>
+
+  <!-- Design 2 -->
+  <div class="design">
+    <h3>ডিজাইন ২ — Gradient stripe (আধুনিক)</h3>
+    <div class="lanyard-preview" id="l2">
+      <svg id="svg2" xmlns="http://www.w3.org/2000/svg" width="320" height="64" viewBox="0 0 320 64">
+        <defs>
+          <linearGradient id="lg" x1="0" x2="1">
+            <stop offset="0" stop-color="#7b1fa2"/>
+            <stop offset="0.5" stop-color="#fb8c00"/>
+            <stop offset="1" stop-color="#1e88e5"/>
+          </linearGradient>
+          <pattern id="stripes" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(20)">
+            <rect width="16" height="16" fill="url(#lg)"></rect>
+            <rect x="0" y="0" width="8" height="16" fill="rgba(255,255,255,0.06)"></rect>
+          </pattern>
+        </defs>
+        <rect width="320" height="64" fill="url(#stripes)"/>
+        <g font-family="Arial" font-size="13" fill="#fff" text-anchor="middle" opacity="0.95">
+          <text x="160" y="38">SM ENGINEERING</text>
+        </g>
+      </svg>
+    </div>
+    <div style="margin-top:8px">
+      <a class="btn" href="#" onclick="downloadSVG('svg2','lanyard-gradient.svg')">Download SVG</a>
+      <span class="small"> — মাঝখানে বড় টেক্সট, প্যাটার্ন ব্যাকগ্রাউন্ড</span>
+    </div>
+  </div>
+
+  <!-- Design 3 -->
+  <div class="design">
+    <h3>ডিজাইন ৩ — Logo repeat + subtle pattern (elegant)</h3>
+    <div class="lanyard-preview" id="l3">
+      <svg id="svg3" xmlns="http://www.w3.org/2000/svg" width="320" height="64" viewBox="0 0 320 64">
+        <defs>
+          <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+            <rect width="16" height="16" fill="#083154"></rect>
+            <circle cx="8" cy="8" r="1.2" fill="#0b57a4"></circle>
+          </pattern>
+        </defs>
+        <rect width="320" height="64" fill="url(#dots)"/>
+        <!-- small logos repeated -->
+        <g transform="translate(12,18)" opacity="0.95">
+          <rect x="0" y="0" width="36" height="28" rx="4" fill="#fff" />
+          <text x="18" y="18" font-family="Arial" font-size="9" fill="#083154" text-anchor="middle">LOGO</text>
+        </g>
+        <g transform="translate(92,18)" opacity="0.95">
+          <rect x="0" y="0" width="36" height="28" rx="4" fill="#fff" />
+          <text x="18" y="18" font-family="Arial" font-size="9" fill="#083154" text-anchor="middle">LOGO</text>
+        </g>
+        <g transform="translate(172,18)" opacity="0.95">
+          <rect x="0" y="0" width="36" height="28" rx="4" fill="#fff" />
+          <text x="18" y="18" font-family="Arial" font-size="9" fill="#083154" text-anchor="middle">LOGO</text>
+        </g>
+        <g transform="translate(252,18)" opacity="0.95">
+          <rect x="0" y="0" width="36" height="28" rx="4" fill="#fff" />
+          <text x="18" y="18" font-family="Arial" font-size="9" fill="#083154" text-anchor="middle">LOGO</text>
+        </g>
+      </svg>
+    </div>
+    <div style="margin-top:8px">
+      <a class="btn" href="#" onclick="downloadSVG('svg3','lanyard-pattern.svg')">Download SVG</a>
+      <span class="small"> — লোগো রিপিটেড, woven-look background</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // download inline svg by id
+  function downloadSVG(svgId, filename){
+    const svgEl = document.getElementById(svgId);
+    const serializer = new XMLSerializer();
+    let source = serializer.serializeToString(svgEl);
+
+    // Add name spaces.
+    if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
+      source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    // Add xml declaration
+    source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+
+    const url = "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(source);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+</script>
+
 </body>
 </html>
